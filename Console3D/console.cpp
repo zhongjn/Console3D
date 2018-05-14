@@ -30,7 +30,7 @@ namespace console3d {
 			dest = { 0, 0, width_actual, height_actual };
 
 			disp = new CHAR_INFO[height_actual * width_actual];
-			for (int i = 0; i < height_actual*width_actual; i++) {
+			for (int i = 0; i < height_actual * width_actual; i++) {
 				disp[i].Attributes = 0x0007;
 				disp[i].Char.AsciiChar = ' ';
 			}

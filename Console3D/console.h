@@ -1,5 +1,4 @@
-#ifndef _CONSOLE_H
-#define _CONSOLE_H
+#pragma once
 
 #include <windows.h>
 #include <stdio.h>
@@ -16,4 +15,3 @@ namespace console3d {
 		void render();
 	}
 }
-#endif
