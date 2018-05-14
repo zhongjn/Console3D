@@ -1,4 +1,4 @@
-#define WIN32_LEAN_AND_MEAN
+//#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include "console.h"
@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 		a++;
 		for (int i = 0; i < 30; i++) {
 			for (int j = 0; j < 30; j++) {
-				console::set_char(i, j, '*'); //(i + j + a) % 32+32
+				console::set_char(i, j, (i + j + a) % 32 + 32); //(i + j + a) % 32+32
 			}
 		}
 		console::render();
