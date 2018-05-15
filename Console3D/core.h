@@ -16,6 +16,14 @@ namespace console3d {
 		class Vector3 {
 		public:
 			float a[3];
+			float norm();
+			Vector3 operator*(float factor);
+			Vector3 operator+(Vector3 vec);
+			Vector3 operator-(Vector3 vec);
+			Vector3 operator-();
+			float operator*(Vector3 vec);
+			float dot(Vector3 vec);
+			Vector3 cross(Vector3 vec);
 		};
 
 

@@ -32,8 +32,11 @@ namespace console3d {
 		}
 
 		Matrix3 Matrix3::from_rotation(Vector3 rotation) {
+			//Rodrigues transform
+			//https://blog.csdn.net/wu_wenhuan/article/details/52588921
 
 		}
+
 		Matrix3 Matrix3::from_scale(float scale) {
 			Matrix3 m;
 			for (int i = 0; i < 3; i++) {

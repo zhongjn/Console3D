@@ -7,17 +7,21 @@ namespace console3d {
 			width = w;
 			pixels = new Pixel[height * width];
 		}
+
 		void Core3DContext::draw_begin(Camera& camera) {
 
 		}
+
 		void Core3DContext::draw_end() {
 
 		}
+
 		void Core3DContext::draw_line(Line &line) {
 
 		}
 
-		static Vector3 project_to_screen() {
+		static Vector3 project_to_screen(Vector3 position) {
+
 			// x, y = screen coord
 			// z = depth
 		}
