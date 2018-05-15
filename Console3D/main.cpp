@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		console::render();
-		Sleep(15);
+		Sleep(5);
 	}
 
 	system("pause");

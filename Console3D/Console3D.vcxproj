@@ -115,7 +115,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
+    <ClCompile Include="core3dcontext.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="matrix3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="console.h" />

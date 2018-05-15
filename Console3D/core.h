@@ -1,9 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-#include <string>
-
 using namespace std;
 
 namespace console3d {
@@ -11,30 +7,40 @@ namespace console3d {
 
 		//二维向量
 		class Vector2 {
-			float x, y;
+		public:
+			float a[2];
 		};
 
 
 		//三维向量
 		class Vector3 {
-			float x, y, z;
+		public:
+			float a[3];
 		};
 
 
-		//仿射变换矩阵
-		class AffineMatrix {
-			float a[4][4];
+		//变换矩阵
+		class Matrix3 {
+		public:
+			float a[3][3] = { 0.0 };
+			Vector3 operator*(Vector3 vec);
+			Matrix3 operator*(Matrix3 m);
+			static Matrix3 identity();
+			static Matrix3 from_rotation(Vector3 rotation);
+			static Matrix3 from_scale(float scale);
 		};
 
 
 		//颜色
-		class Color {
+		struct Color {
+		public:
 			unsigned char r, g, b;
 		};
 
 
 		//顶点
-		class Vertex {
+		struct Vertex {
+		public:
 			Vector3 position;
 			Color color;
 		};
@@ -42,6 +48,7 @@ namespace console3d {
 
 		//3D物体最基本的单位
 		class Object {
+		public:
 			Vector3 position;
 			Vector3 rotation;
 		};
@@ -56,12 +63,14 @@ namespace console3d {
 
 		//线框
 		class Line : Object {
+		public:
 			Vector3 orientation;
 		};
 
 
 		//相机
 		class Camera : Object {
+		public:
 			Vector2 angle;
 			float depth_minimum;
 		};
@@ -69,17 +78,22 @@ namespace console3d {
 
 		//像素
 		class Pixel {
-			float depth; //深度
-			Color color;
+		public:
+			float depth = 0.0; //深度
+			Color color = { 0, 0, 0 };
 		};
 
 
 		class Core3DContext {
+		public:
+			short height, width;
 			Core3DContext(short height, short width); //根据画面高度宽度初始化pixels
 			Pixel* pixels;
 			void draw_begin(Camera& camera); //开始画一帧，还原pixels
 			void draw_end(); //结束画一帧
-			void draw_line(Line& line); //将一条线光栅化到像素上
+			void draw_line(Line &line); //将一条线光栅化到像素上
+		private:
+			Matrix3 camera_derotation;
 		};
 
 	}
