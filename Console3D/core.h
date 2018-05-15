@@ -5,16 +5,13 @@ using namespace std;
 namespace console3d {
 	namespace core {
 
-		//二维向量
-		class Vector2 {
-		public:
-			float a[2];
-		};
 
 
 		//三维向量
 		class Vector3 {
 		public:
+			Vector3();
+			Vector3(float x, float y, float z);
 			float a[3] = { 0.0f };
 			float norm();
 			Vector3 operator*(float factor);
@@ -35,6 +32,7 @@ namespace console3d {
 			Vector3 operator*(Vector3 vec);
 			Matrix3 operator*(Matrix3 m);
 			Matrix3 operator*(float factor);
+			Matrix3 operator/(float factor);
 			Matrix3 operator+(Matrix3 m);
 			Matrix3 inverse();
 			static Matrix3 identity();
@@ -42,19 +40,29 @@ namespace console3d {
 			static Matrix3 from_scale(float scale);
 		};
 
+		
+		//过会实现，替换掉旋转向量，并加入世界变换
+		class AffineTransformation {
+		public:
+			Matrix3 linear;
+			Vector3 translation;
+		};
+
 
 		//颜色
 		struct Color {
-		public:
 			unsigned char r, g, b;
 		};
 
 
 		//顶点
 		struct Vertex {
-		public:
 			Vector3 position;
 			Color color;
+		};
+
+		struct Size {
+			float width, height;
 		};
 
 
@@ -62,7 +70,7 @@ namespace console3d {
 		class Object {
 		public:
 			Vector3 position;
-			Vector3 rotation;
+			Vector3 rotation = Vector3(0, 0, 0);
 		};
 
 
@@ -77,14 +85,18 @@ namespace console3d {
 		class Line : public Object {
 		public:
 			Vector3 orientation;
+			Color color1 = { 0xFF, 0xFF, 0xFF };
+			Color color2 = { 0xFF, 0xFF, 0xFF };
 		};
 
 
 		//相机
 		class Camera : public Object {
 		public:
-			Vector2 angle;
-			float depth_minimum;
+			Camera();
+			Camera(Vector3 pos, Vector3 rot, Size lens);
+			Size lens_size;
+			float depth_minimum = 0.0f;
 		};
 
 
@@ -101,11 +113,13 @@ namespace console3d {
 			short height, width;
 			Core3DContext(short height, short width); //根据画面高度宽度初始化pixels
 			Pixel* pixels;
-			void draw_begin(Camera& camera); //开始画一帧，还原pixels
+			void draw_begin(Camera cam); //开始画一帧，还原pixels
 			void draw_end(); //结束画一帧
 			void draw_line(Line &line); //将一条线光栅化到像素上
-		private:
+		//private:
 			Matrix3 camera_derotation;
+			Camera camera;
+			Vector3 project_to_screen_coord(Vector3 position);
 		};
 
 	}

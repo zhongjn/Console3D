@@ -37,6 +37,11 @@ namespace console3d {
 			return m2;
 		}
 
+		Matrix3 Matrix3::operator/(float factor)
+		{
+			return (*this) * (1.0f / factor);
+		}
+
 		Matrix3 Matrix3::operator+(Matrix3 m)
 		{
 			Matrix3 m2;
@@ -46,6 +51,24 @@ namespace console3d {
 				}
 			}
 			return m2;
+		}
+
+		Matrix3 Matrix3::inverse()
+		{
+			float det =
+				a[0][0] * a[1][1] * a[2][2] + a[0][1] * a[1][2] * a[2][0] + a[0][2] * a[1][0] * a[2][1] -
+				a[0][2] * a[1][1] * a[2][0] - a[0][1] * a[1][0] * a[2][2] - a[0][0] * a[1][2] * a[2][1];
+			Matrix3 m;
+			m.a[0][0] = a[1][1] * a[2][2] - a[2][1] * a[1][2];
+			m.a[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
+			m.a[0][2] = a[0][1] * a[1][2] - a[0][2] * a[1][1];
+			m.a[1][0] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
+			m.a[1][1] = a[0][0] * a[2][2] - a[0][2] * a[2][0];
+			m.a[1][2] = a[1][0] * a[0][2] - a[0][0] * a[1][2];
+			m.a[2][0] = a[1][0] * a[2][1] - a[2][0] * a[1][1];
+			m.a[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
+			m.a[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
+			return m / det;
 		}
 
 		Matrix3 Matrix3::identity() {
@@ -61,6 +84,11 @@ namespace console3d {
 			//https://blog.csdn.net/wu_wenhuan/article/details/52588921
 
 			float ¦È = r.norm();
+
+			if (¦È <= 0) {
+				return Matrix3::identity();
+			}
+
 			r = r / ¦È;
 			float cos = cosf(¦È), sin = sinf(¦È);
 
@@ -78,7 +106,7 @@ namespace console3d {
 					rrT.a[i][j] = r.a[i] * r.a[j];
 				}
 			}
-			Matrix3 R = Matrix3::identity() * cos + rrT *(1 - cos) + m* sin;
+			Matrix3 R = Matrix3::identity() * cos + rrT *(1 - cos) + m * sin;
 
 			return R;
 		}

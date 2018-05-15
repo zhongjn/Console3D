@@ -3,7 +3,15 @@
 
 namespace console3d {
 	namespace core {
-
+		Vector3::Vector3()
+		{
+		}
+		Vector3::Vector3(float x, float y, float z)
+		{
+			a[0] = x;
+			a[1] = y;
+			a[2] = z;
+		}
 		float Vector3::norm() {
 			float accum = 0.0f;
 			for (int i = 0; i < 3; i++) {
