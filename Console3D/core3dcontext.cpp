@@ -9,14 +9,14 @@ namespace console3d {
 			pixels = new Pixel[height * width];
 		}
 
-		void Core3DContext::draw_begin(Camera cam) {
+		void Core3DContext::draw_begin() {
 			for (int i = 0; i < height*width; i++) {
 				pixels[i].color = { 0, 0, 0 };
 				pixels[i].depth = FLT_MAX;
 			}
-			auto r = cam.rotation;
-			camera = cam;
-			camera_derotation = Matrix3::from_rotation(r).inverse();
+			//auto r = camera.rotation;
+			//camera_derotation = Matrix3::from_rotation(r).inverse();
+			camera_detransform = camera.transformation.inverse();
 		}
 
 		void Core3DContext::draw_end() {
@@ -24,9 +24,11 @@ namespace console3d {
 		}
 
 		void Core3DContext::draw_line(Line &line) {
-			Vector3 orien = Matrix3::from_rotation(line.rotation) * line.orientation;
-			Vector3 end = line.position + orien;
-			Vector3 coord_start = project_to_screen_coord(line.position);
+			//Vector3 orien = Matrix3::from_rotation(line.rotation) * line.orientation;
+			//Vector3 end = line.position + orien;
+			Vector3 start = line.transformation.apply(Vector3(), true);
+			Vector3 end = line.transformation.apply(line.orientation, true);
+			Vector3 coord_start = project_to_screen_coord(start);
 			Vector3 coord_end = project_to_screen_coord(end);
 
 			Vector3 screen_dir = coord_end - coord_start;
@@ -53,9 +55,10 @@ namespace console3d {
 			// (x,y)=ScreenCoord, x=vertical, y=horizontal, TopLeft=(0,0), BottomRight=(height,width)
 			// z = depth
 			Vector3 out;
-			pos = pos - camera.position;
-			pos = camera_derotation * pos;
-
+			//pos = pos - camera.position;
+			//pos = camera_derotation * pos;
+			pos = world.apply(pos, true);
+			pos = camera_detransform.apply(pos, true);
 			out.a[0] = pos.a[0] / pos.a[2] / camera.lens_size.height + 0.5f;
 			out.a[1] = pos.a[1] / pos.a[2] / camera.lens_size.width + 0.5f;
 			out.a[2] = pos.a[2]; // put camera on the Z axis

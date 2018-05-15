@@ -5,6 +5,7 @@ using namespace std;
 namespace console3d {
 	namespace core {
 
+		const int X = 0, Y = 1, Z = 2;
 
 
 		//三维向量
@@ -40,13 +41,21 @@ namespace console3d {
 			static Matrix3 from_scale(float scale);
 		};
 
-		
-		//过会实现，替换掉旋转向量，并加入世界变换
-		class AffineTransformation {
+
+		class Transformation {
 		public:
+			Transformation();
+			Transformation(Matrix3 linear, Vector3 translation);
+			Transformation inverse();
+			Transformation operator*(Transformation t);
+			Vector3 apply(Vector3 v, bool affine);
 			Matrix3 linear;
 			Vector3 translation;
+			static Transformation from_rotation(int axis, float theta);
+			static Transformation from_translation(Vector3 vec);
+			static Transformation from_scale(float scale);
 		};
+
 
 
 		//颜色
@@ -69,8 +78,7 @@ namespace console3d {
 		//3D物体最基本的单位
 		class Object {
 		public:
-			Vector3 position;
-			Vector3 rotation = Vector3(0, 0, 0);
+			Transformation transformation;
 		};
 
 
@@ -94,7 +102,7 @@ namespace console3d {
 		class Camera : public Object {
 		public:
 			Camera();
-			Camera(Vector3 pos, Vector3 rot, Size lens);
+			Camera(Transformation trans, Size lens);
 			Size lens_size;
 			float depth_minimum = 0.0f;
 		};
@@ -113,12 +121,13 @@ namespace console3d {
 			short height, width;
 			Core3DContext(short height, short width); //根据画面高度宽度初始化pixels
 			Pixel* pixels;
-			void draw_begin(Camera cam); //开始画一帧，还原pixels
+			void draw_begin(); //开始画一帧，还原pixels
 			void draw_end(); //结束画一帧
 			void draw_line(Line &line); //将一条线光栅化到像素上
-		//private:
-			Matrix3 camera_derotation;
+			Transformation world;
 			Camera camera;
+		private:
+			Transformation camera_detransform;
 			Vector3 project_to_screen_coord(Vector3 position);
 		};
 
