@@ -1,4 +1,5 @@
 #include "core.h"
+#include <cfloat>
 
 namespace console3d {
 	namespace core {
@@ -9,6 +10,11 @@ namespace console3d {
 		}
 
 		void Core3DContext::draw_begin(Camera& camera) {
+			for (int i = 0; i < height*width; i++) {
+				pixels[i].color = { 0, 0, 0 };
+				pixels[i].depth = FLT_MAX;
+			}
+			Vector3 r = camera.rotation;
 
 		}
 

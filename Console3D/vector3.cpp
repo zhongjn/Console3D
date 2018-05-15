@@ -18,17 +18,14 @@ namespace console3d {
 			}
 			return v2;
 		}
+		Vector3 Vector3::operator/(float factor)
+		{
+			return (*this) * (1.0f / factor);
+		}
 		Vector3 Vector3::operator+(Vector3 vec) {
 			Vector3 v2;
 			for (int i = 0; i < 3; i++) {
 				v2.a[i] = a[i] + vec.a[i];
-			}
-			return v2;
-		}
-		Vector3 Vector3::operator-(Vector3 vec) {
-			Vector3 v2;
-			for (int i = 0; i < 3; i++) {
-				v2.a[i] = a[i] - vec.a[i];
 			}
 			return v2;
 		}
@@ -40,6 +37,11 @@ namespace console3d {
 			}
 			return v2;
 		}
+
+		Vector3 Vector3::operator-(Vector3 vec) {
+			return (*this) + (-vec);
+		}
+
 
 		float Vector3::operator*(Vector3 vec) {
 			return dot(vec);
@@ -56,6 +58,7 @@ namespace console3d {
 		Vector3 Vector3::cross(Vector3 vec) {
 			// TODO:
 			// cross product
+			return Vector3();
 		}
 
 	}

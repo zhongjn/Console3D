@@ -15,9 +15,10 @@ namespace console3d {
 		//三维向量
 		class Vector3 {
 		public:
-			float a[3];
+			float a[3] = { 0.0f };
 			float norm();
 			Vector3 operator*(float factor);
+			Vector3 operator/(float factor);
 			Vector3 operator+(Vector3 vec);
 			Vector3 operator-(Vector3 vec);
 			Vector3 operator-();
@@ -30,9 +31,12 @@ namespace console3d {
 		//变换矩阵
 		class Matrix3 {
 		public:
-			float a[3][3] = { 0.0 };
+			float a[3][3] = { 0.0f };
 			Vector3 operator*(Vector3 vec);
 			Matrix3 operator*(Matrix3 m);
+			Matrix3 operator*(float factor);
+			Matrix3 operator+(Matrix3 m);
+			Matrix3 inverse();
 			static Matrix3 identity();
 			static Matrix3 from_rotation(Vector3 rotation);
 			static Matrix3 from_scale(float scale);
@@ -70,14 +74,14 @@ namespace console3d {
 
 
 		//线框
-		class Line : Object {
+		class Line : public Object {
 		public:
 			Vector3 orientation;
 		};
 
 
 		//相机
-		class Camera : Object {
+		class Camera : public Object {
 		public:
 			Vector2 angle;
 			float depth_minimum;
