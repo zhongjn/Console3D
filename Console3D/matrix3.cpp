@@ -74,7 +74,7 @@ namespace console3d {
 		Matrix3 Matrix3::identity() {
 			Matrix3 m;
 			for (int i = 0; i < 3; i++) {
-				m.a[i][i] = 1.0;
+				m.a[i][i] = 1.0f;
 			}
 			return m;
 		}

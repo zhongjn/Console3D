@@ -119,6 +119,7 @@
     <ClCompile Include="core3dcontext.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="matrix3.cpp" />
+    <ClCompile Include="transformation.cpp" />
     <ClCompile Include="vector3.cpp" />
   </ItemGroup>
   <ItemGroup>

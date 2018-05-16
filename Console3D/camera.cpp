@@ -4,10 +4,9 @@ namespace console3d {
 		Camera::Camera() {
 
 		}
-		Camera::Camera(Vector3 pos, Vector3 rot, Size lens)
+		Camera::Camera(Transformation trans, Size lens)
 		{
-			position = pos;
-			rotation = rot;
+			transformation = trans;
 			lens_size = lens;
 		}
 	}
