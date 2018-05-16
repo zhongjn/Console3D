@@ -1,0 +1,10 @@
+﻿  console.cpp
+  camera.cpp
+  core3dcontext.cpp
+  main.cpp
+c:\users\25773\desktop\console3d-master\console3d\main.cpp(29): warning C4305: “+=”: 从“double”到“float”截断
+  matrix3.cpp
+  transformation.cpp
+  vector3.cpp
+  正在生成代码...
+  Console3D.vcxproj -> C:\Users\25773\Desktop\Console3D-master\x64\Debug\Console3D.exe

@@ -34,6 +34,31 @@ namespace console3d {
 			return out;
 		}
 
+		Transformation Transformation::scale(float factor) {
+			Transformation out;
+			out.linear = Matrix3::from_scale(factor);
+			return out * (*this);
+		}
+
+		Transformation Transformation::rotate(int axis, float theta){
+			if (axis >= 0 && axis < 3) {
+				Vector3 r;
+				r.a[axis] = theta;
+				Transformation out(Matrix3::from_rotation(r), Vector3());
+				return  out * (*this);
+			}
+			else {
+				return  *this;
+			}
+		}
+
+		Transformation Transformation::translate(Vector3 vec)
+		{
+			Transformation out;
+			out.translation = vec;
+			return  out * (*this);
+		}
+		/*
 		Transformation Transformation::from_rotation(int axis, float theta)
 		{
 			if (axis >= 0 && axis < 3) {
@@ -55,6 +80,6 @@ namespace console3d {
 		{
 			return Transformation(Matrix3::from_scale(scale), Vector3());
 		}
-
+		*/
 	}
 }
