@@ -49,11 +49,11 @@ namespace console3d {
 			Transformation inverse();
 			Transformation operator*(Transformation t);
 			Vector3 apply(Vector3 v, bool affine);
+			Transformation scale(float scale);
+			Transformation rotate(int axis, float theta);
+			Transformation translate(Vector3 vec);
 			Matrix3 linear;
 			Vector3 translation;
-			static Transformation from_rotation(int axis, float theta);
-			static Transformation from_translation(Vector3 vec);
-			static Transformation from_scale(float scale);
 		};
 
 
@@ -129,6 +129,7 @@ namespace console3d {
 		private:
 			Transformation camera_detransform;
 			Vector3 project_to_screen_coord(Vector3 position);
+			Matrix3 screen_coord_to_plane
 		};
 
 	}
