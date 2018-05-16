@@ -20,15 +20,15 @@ int main(int argc, char **argv) {
 	console::initialize(size, size);
 
 
-	auto cam_trans = Transformation::from_rotation(Y, -0.5) *
-		Transformation::from_translation(Vector3(0, 0, -3));
+	auto cam_trans =
+		Transformation().translate(Vector3(0, 0, -3)).rotate(Y, -0.5);
 	Camera camera(cam_trans, Size{ 1, 1 });
 	context.camera = camera;
 
 	while (true) {
 		angle += 0.05;
 		
-		context.world = Transformation::from_rotation(X, angle);
+		context.world = Transformation().rotate(X, angle);
 		context.draw_begin();
 
 		Line line1;

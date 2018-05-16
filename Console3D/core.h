@@ -129,7 +129,7 @@ namespace console3d {
 		private:
 			Transformation camera_detransform;
 			Vector3 project_to_screen_coord(Vector3 position);
-			Matrix3 screen_coord_to_plane
+			Matrix3 screen_coord_to_plane;
 		};
 
 	}
