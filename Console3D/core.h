@@ -1,4 +1,6 @@
 #pragma once
+#include <stdarg.h>
+#include <math.h>
 
 using namespace std;
 
@@ -6,38 +8,93 @@ namespace console3d {
 	namespace core {
 
 		const int X = 0, Y = 1, Z = 2;
+		const int HORIZONTAL = 0, VERTICAL = 1, DEPTH = 2;
+		const int U = 0, V = 0;
 
-
-		//三维向量
-		class Vector3 {
+		template<int _size>
+		class Vector {
+		private:
+			float a[_size] = { 0.0f };
 		public:
-			Vector3();
-			Vector3(float x, float y, float z);
-			float a[3] = { 0.0f };
-			float norm();
-			Vector3 operator*(float factor);
-			Vector3 operator/(float factor);
-			Vector3 operator+(Vector3 vec);
-			Vector3 operator-(Vector3 vec);
-			Vector3 operator-();
-			float operator*(Vector3 vec);
-			float dot(Vector3 vec);
-			Vector3 cross(Vector3 vec);
+			Vector() {};
+			Vector(float a0, ...) {
+				va_list ap;
+				va_start(ap, a0);
+				a[0] = a0;
+				for (int i = 1; i < _size; i++) {
+					a[i] = (float)va_arg(ap, double);
+				}
+				va_end(ap);
+			}
+
+			float& operator[](int i) {
+				return a[i];
+			}
+
+			float norm() {
+				float accum = 0.0f;
+				for (int i = 0; i < _size; i++) {
+					accum += powf(a[i], 2);
+				}
+				return sqrtf(accum);
+			}
+			Vector<_size> operator*(float factor) {
+				Vector<_size> v2;
+				for (int i = 0; i < _size; i++) {
+					v2[i] = a[i] * factor;
+				}
+				return v2;
+			}
+			Vector<_size> operator/(float factor) {
+				return (*this) * (1.0f / factor);
+			}
+			Vector<_size> operator+(Vector<_size> vec) {
+				Vector<_size> v2;
+				for (int i = 0; i < _size; i++) {
+					v2[i] = a[i] + vec[i];
+				}
+				return v2;
+			}
+			Vector<_size> operator-() {
+				Vector<_size> v2;
+				for (int i = 0; i < _size; i++) {
+					v2[i] = -a[i];
+				}
+				return v2;
+			}
+			Vector<_size> operator-(Vector<_size> vec) {
+				return (*this) + (-vec);
+			}
+			float dot(Vector<_size> vec) {
+				float accum = 0.0f;
+				for (int i = 0; i < _size; i++) {
+					accum += a[i] * vec[i];
+				}
+				return accum;
+			}
+			float operator*(Vector<_size> vec) {
+				return dot(vec);
+			}
 		};
+
+		typedef Vector<2> UV;
+		typedef Vector<3> ScreenCoord;
 
 
 		//变换矩阵
 		class Matrix3 {
-		public:
+		private:
 			float a[3][3] = { 0.0f };
-			Vector3 operator*(Vector3 vec);
+		public:
+			float* operator[](int i);
+			Vector<3> operator*(Vector<3> vec);
 			Matrix3 operator*(Matrix3 m);
 			Matrix3 operator*(float factor);
 			Matrix3 operator/(float factor);
 			Matrix3 operator+(Matrix3 m);
 			Matrix3 inverse();
 			static Matrix3 identity();
-			static Matrix3 from_rotation(Vector3 rotation);
+			static Matrix3 from_rotation(Vector<3> rotation);
 			static Matrix3 from_scale(float scale);
 		};
 
@@ -45,17 +102,18 @@ namespace console3d {
 		class Transformation {
 		public:
 			Transformation();
-			Transformation(Matrix3 linear, Vector3 translation);
+			Transformation(Matrix3 linear, Vector<3> translation);
 			Transformation inverse();
 			Transformation operator*(Transformation t);
-			Vector3 apply(Vector3 v, bool affine);
+			Vector<3> apply(Vector<3> v, bool affine);
 			Transformation scale(float scale);
 			Transformation rotate(int axis, float theta);
-			Transformation translate(Vector3 vec);
+			Transformation translate(Vector<3> vec);
 			Matrix3 linear;
-			Vector3 translation;
+			Vector<3> translation;
 		};
 
+		
 
 
 		//颜色
@@ -66,7 +124,7 @@ namespace console3d {
 
 		//顶点
 		struct Vertex {
-			Vector3 position;
+			Vector<3> position;
 			Color color;
 		};
 
@@ -92,7 +150,7 @@ namespace console3d {
 		//线框
 		class Line : public Object {
 		public:
-			Vector3 orientation;
+			Vector<3> orientation;
 			Color color1 = { 0xFF, 0xFF, 0xFF };
 			Color color2 = { 0xFF, 0xFF, 0xFF };
 		};
@@ -128,7 +186,7 @@ namespace console3d {
 			Camera camera;
 		private:
 			Transformation camera_detransform;
-			Vector3 project_to_screen_coord(Vector3 position);
+			ScreenCoord project_to_screen(Vector<3> position);
 			Matrix3 screen_coord_to_plane;
 		};
 

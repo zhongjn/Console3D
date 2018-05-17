@@ -3,6 +3,10 @@
 
 namespace console3d {
 	namespace core {
+		Vector<2> perspect_correct(float zb, float z0, float z1, Vector<2> k);
+		Vector<2> vec2_decompose(Vector<2> basis[2], Vector<2> vec);
+		Vector<2> screen_coord_to_vec2(ScreenCoord s);
+
 		Core3DContext::Core3DContext(short h, short w) {
 			height = h;
 			width = w;
@@ -24,24 +28,24 @@ namespace console3d {
 		}
 
 		void Core3DContext::draw_line(Line &line) {
-			//Vector3 orien = Matrix3::from_rotation(line.rotation) * line.orientation;
-			//Vector3 end = line.position + orien;
-			Vector3 start = line.transformation.apply(Vector3(), true);
-			Vector3 end = line.transformation.apply(line.orientation, true);
-			Vector3 coord_start = project_to_screen_coord(start);
-			Vector3 coord_end = project_to_screen_coord(end);
+			//Vector<3> orien = Matrix3::from_rotation(line.rotation) * line.orientation;
+			//Vector<3> end = line.position + orien;
+			Vector<3> start = line.transformation.apply(Vector<3>(), true);
+			Vector<3> end = line.transformation.apply(line.orientation, true);
+			ScreenCoord coord_start = project_to_screen(start);
+			ScreenCoord coord_end = project_to_screen(end);
 
-			Vector3 screen_dir = coord_end - coord_start;
+			ScreenCoord screen_dir = coord_end - coord_start;
 			float len = screen_dir.norm();
-			Vector3 step = screen_dir / len / 2;
-			Vector3 cur = coord_start;
+			ScreenCoord step = screen_dir / len / 2;
+			ScreenCoord cur = coord_start;
 			for (int i = 0; i < len * 2; i++) {
-				float depth = cur.a[2];
+				float depth = cur[2];
 				if (depth >= camera.depth_minimum) {
-					int x = (int)(cur.a[0] + 0.5);
-					int y = (int)(cur.a[1] + 0.5);
-					if (x >= 0 && x < height && y >= 0 && y < width) {
-						Pixel &p = pixels[x * height + y];
+					int x = (int)(cur[HORIZONTAL]);
+					int y = (int)(cur[VERTICAL]);
+					if (x >= 0 && x < width && y >= 0 && y < height) {
+						Pixel &p = pixels[y * width + x];
 						if (depth < p.depth) {
 							p.color = Color{ 0xFF, 0xFF, 0xFF };
 						}
@@ -51,22 +55,45 @@ namespace console3d {
 			}
 		}
 
-		Vector3 Core3DContext::project_to_screen_coord(Vector3 pos) {
+		Vector<3> Core3DContext::project_to_screen(Vector<3> pos) {
 			// (x,y)=ScreenCoord, x=vertical, y=horizontal, TopLeft=(0,0), BottomRight=(height,width)
 			// z = depth
-			Vector3 out;
+			Vector<3> temp;
 			//pos = pos - camera.position;
 			//pos = camera_derotation * pos;
 			pos = world.apply(pos, true);
 			pos = camera_detransform.apply(pos, true);
-			out.a[0] = pos.a[0] / pos.a[2] / camera.lens_size.height + 0.5f;
-			out.a[1] = pos.a[1] / pos.a[2] / camera.lens_size.width + 0.5f;
-			out.a[2] = pos.a[2]; // put camera on the Z axis
+			temp[0] = pos[0] / pos[2] / camera.lens_size.width + 0.5f;
+			temp[1] = pos[1] / pos[2] / camera.lens_size.height + 0.5f;
 
-			out.a[0] = (float)height * (1 - out.a[0]);
-			out.a[1] = (float)width * out.a[1];
+			ScreenCoord coord;
+			coord[DEPTH] = pos[2];
+			coord[HORIZONTAL] = (float)width * (1 - temp[0]);
+			coord[VERTICAL] = (float)height * (1 - temp[1]);
+			return coord;
+		}
 
-			return out;
+		Vector<2> perspect_correct(float zb, float z0, float z1, Vector<2> k)
+		{
+			Vector<2> vec;
+			float denom = k[0] / z0 + k[1] / z1 + (1 - k[0] - k[1]) / zb;
+			vec[0] = k[0] / z0 / denom;
+			vec[1] = k[1] / z1 / denom;
+			return vec;
+		}
+		Vector<2> screen_coord_to_vec2(ScreenCoord s) {
+			Vector<2> ret;
+			ret[0] = s[0];
+			ret[1] = s[1];
+			return ret;
+		}
+		Vector<2> vec2_decompose(Vector<2> b[2], Vector<2> vec)
+		{
+			float det = b[0][0] * b[1][1] - b[1][0] * b[0][1];
+			Vector<2> ret;
+			ret[0] = b[1][1] * vec[0] - b[0][1] * vec[1];
+			ret[1] = -b[1][0] * vec[0] + b[0][0] * vec[1];
+			return ret / det;
 		}
 	}
 }

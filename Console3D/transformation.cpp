@@ -6,7 +6,7 @@ namespace console3d {
 			linear = Matrix3::identity();
 		}
 
-		Transformation::Transformation(Matrix3 linear, Vector3 translation)
+		Transformation::Transformation(Matrix3 linear, Vector<3> translation)
 			: linear(linear), translation(translation) {
 		}
 
@@ -25,8 +25,8 @@ namespace console3d {
 			return out;
 		}
 
-		Vector3 Transformation::apply(Vector3 v, bool affine) {
-			Vector3 out;
+		Vector<3> Transformation::apply(Vector<3> v, bool affine) {
+			Vector<3> out;
 			out = linear * v;
 			if (affine) {
 				out = translation + out;
@@ -42,9 +42,9 @@ namespace console3d {
 
 		Transformation Transformation::rotate(int axis, float theta) {
 			if (axis >= 0 && axis < 3) {
-				Vector3 r;
-				r.a[axis] = theta;
-				Transformation out(Matrix3::from_rotation(r), Vector3());
+				Vector<3> r;
+				r[axis] = theta;
+				Transformation out(Matrix3::from_rotation(r), Vector<3>());
 				return  out * (*this);
 			}
 			else {
@@ -52,7 +52,7 @@ namespace console3d {
 			}
 		}
 
-		Transformation Transformation::translate(Vector3 vec)
+		Transformation Transformation::translate(Vector<3> vec)
 		{
 			Transformation out;
 			out.translation = vec;
