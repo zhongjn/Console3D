@@ -114,17 +114,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="console.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="core3dcontext.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="matrix3.cpp" />
+    <ClCompile Include="present.cpp" />
     <ClCompile Include="transformation.cpp" />
     <ClCompile Include="vector3.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="console.h" />
     <ClInclude Include="core.h" />
+    <ClInclude Include="present.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

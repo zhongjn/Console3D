@@ -1,15 +1,18 @@
 #pragma once
 #include <stdarg.h>
 #include <math.h>
+#include <vector>
+#include <type_traits>
 
-using namespace std;
+//using namespace std;
 
 namespace console3d {
 	namespace core {
 
 		const int X = 0, Y = 1, Z = 2;
-		const int HORIZONTAL = 0, VERTICAL = 1, DEPTH = 2;
-		const int U = 0, V = 0;
+		//const int DEPTH = 2;
+		//const int X = 0, Y = 1, DEPTH = 2;
+		//const int U = 0, V = 0;
 
 		template<int _size>
 		class Vector {
@@ -17,14 +20,10 @@ namespace console3d {
 			float a[_size] = { 0.0f };
 		public:
 			Vector() {};
-			Vector(float a0, ...) {
-				va_list ap;
-				va_start(ap, a0);
-				a[0] = a0;
-				for (int i = 1; i < _size; i++) {
-					a[i] = (float)va_arg(ap, double);
-				}
-				va_end(ap);
+
+			template <typename... Args>
+			Vector(Args... args) : a{ float(args)... } {
+				static_assert(sizeof...(Args) == _size, "Wrong number of arguments!");
 			}
 
 			float& operator[](int i) {
@@ -78,8 +77,10 @@ namespace console3d {
 		};
 
 		typedef Vector<2> UV;
-		typedef Vector<3> ScreenCoord;
-
+		typedef Vector<2> ScreenCoordXY;
+		typedef Vector<3> ScreenCoordXYZ;
+		typedef Vector<3> Color;
+		typedef Vector<3> Position;
 
 		//变换矩阵
 		class Matrix3 {
@@ -113,18 +114,11 @@ namespace console3d {
 			Vector<3> translation;
 		};
 
-		
-
-
-		//颜色
-		struct Color {
-			unsigned char r, g, b;
-		};
-
 
 		//顶点
-		struct Vertex {
-			Vector<3> position;
+		class Vertex {
+		public:
+			Position position;
 			Color color;
 		};
 
@@ -139,12 +133,17 @@ namespace console3d {
 			Transformation transformation;
 		};
 
+		class VertexTriangle {
+		public:
+			int index[3] = { 0 };
+			VertexTriangle(int i0, int i1, int i2);
+		};
 
-		//后续再支持，先实现Line
-		//class Polyhedron : Object { 
-		//	Vertex* vertexes;
-		//	int vertexes_count;
-		//};
+		class Polyhedron : public Object {
+		public:
+			std::vector<Vertex> vertexes;
+			Polyhedron(std::vector<Vertex> vertexes) : vertexes(vertexes) {}
+		};
 
 
 		//线框
@@ -177,17 +176,18 @@ namespace console3d {
 		class Core3DContext {
 		public:
 			short height, width;
-			Core3DContext(short height, short width); //根据画面高度宽度初始化pixels
+			Core3DContext(short width, short height); //根据画面高度宽度初始化pixels
 			Pixel* pixels;
 			void draw_begin(); //开始画一帧，还原pixels
 			void draw_end(); //结束画一帧
 			void draw_line(Line &line); //将一条线光栅化到像素上
-			Transformation world;
+			void draw_polyhedron(Polyhedron &polyhedron);
+			Transformation world_transformation;
 			Camera camera;
 		private:
+			Transformation combined_transformation;
 			Transformation camera_detransform;
-			ScreenCoord project_to_screen(Vector<3> position);
-			Matrix3 screen_coord_to_plane;
+			ScreenCoordXYZ project_to_screen(Vector<3> position);
 		};
 
 	}
