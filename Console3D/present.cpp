@@ -3,7 +3,9 @@
 namespace console3d {
 	namespace present {
 		struct tempcolor {
-			BYTE r, g, b;
+			BYTE b;
+			BYTE g;
+			BYTE r;
 		};
 		static int psize;
 		static int owidth, oheight;
@@ -21,7 +23,7 @@ namespace console3d {
 			psize = pixel_size;
 
 			myhwnd = hwnd;
-			mydc = GetDC(hwnd); 
+			mydc = GetDC(hwnd);
 			memdc = CreateCompatibleDC(mydc);
 
 			BITMAPINFO binfo;
@@ -46,11 +48,11 @@ namespace console3d {
 			ReleaseDC(myhwnd, mydc);
 		}
 
-		void present(){
+		void present() {
 			BitBlt(mydc, 0, 0, width, height, memdc, 0, 0, SRCCOPY);
 		}
 
-		void set_pixel(int x, int y, core::Color color){
+		void set_pixel(int x, int y, core::Color color) {
 			tempcolor c;
 			for (int i = 0; i < 3; i++) {
 				if (color[i] < 0) {
@@ -65,7 +67,7 @@ namespace console3d {
 			c.b = (BYTE)color[2];
 			for (int i = 0; i < psize; i++) {
 				for (int j = 0; j < psize; j++) {
-					pixels[((oheight - 1 -y) * psize + j) * width + (x * psize + i)] = c;
+					pixels[((oheight - 1 - y) * psize + j) * width + (x * psize + i)] = c;
 				}
 			}
 		}

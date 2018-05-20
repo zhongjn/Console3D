@@ -5,84 +5,158 @@
 #include "core.h"
 #include "present.h"
 #include <math.h>
+#include <chrono>
+
 using namespace console3d;
 using namespace core;
 
-const int width = 160, height = 120;
+const int width = 320, height = 240;
+
+
+Mesh cube() {
+	int multi = 30;
+
+	Vertex temp;
+	VertexTriangle triangle;
+
+	std::vector<Vertex> vertexes;
+	std::vector<VertexTriangle> triangles;
+
+	int current = 0;
+	for (int i = -1; i <= 1; i += 2) {
+		for (int j = -1; j <= 1; j += 2) {
+			int t = (i + j + 2) * 60;
+			temp.position = Vector<3>(1, i, j);
+			temp.color = Color(255, (i + j + 2) * multi, (i + j + 2) * multi);
+			vertexes.emplace_back(temp);
+		}
+	}
+	triangles.emplace_back(current, current + 1, current + 2);
+	triangles.emplace_back(current + 1, current + 2, current + 3);
+	current += 4;
+
+	for (int i = -1; i <= 1; i += 2) {
+		for (int j = -1; j <= 1; j += 2) {
+			temp.position = Vector<3>(-1, i, j);
+			temp.color = Color(255, (i + j + 2) * multi, (i + j + 2) * multi);
+			vertexes.emplace_back(temp);
+		}
+	}
+	triangles.emplace_back(current, current + 1, current + 2);
+	triangles.emplace_back(current + 1, current + 2, current + 3);
+	current += 4;
+
+	for (int i = -1; i <= 1; i += 2) {
+		for (int j = -1; j <= 1; j += 2) {
+			temp.position = Vector<3>(i, 1, j);
+			temp.color = Color((i + j + 2) * multi, 255, (i + j + 2) * multi);
+			vertexes.emplace_back(temp);
+		}
+	}
+	triangles.emplace_back(current, current + 1, current + 2);
+	triangles.emplace_back(current + 1, current + 2, current + 3);
+	current += 4;
+
+	for (int i = -1; i <= 1; i += 2) {
+		for (int j = -1; j <= 1; j += 2) {
+			temp.position = Vector<3>(i, -1, j);
+			temp.color = Color((i + j + 2) * multi, 255, (i + j + 2) * multi);
+			vertexes.emplace_back(temp);
+		}
+	}
+	triangles.emplace_back(current, current + 1, current + 2);
+	triangles.emplace_back(current + 1, current + 2, current + 3);
+	current += 4;
+
+	for (int i = -1; i <= 1; i += 2) {
+		for (int j = -1; j <= 1; j += 2) {
+			temp.position = Vector<3>(i, j, 1);
+			temp.color = Color((i + j + 2) * multi, (i + j + 2) * multi, 255);
+			vertexes.emplace_back(temp);
+		}
+	}
+	triangles.emplace_back(current, current + 1, current + 2);
+	triangles.emplace_back(current + 1, current + 2, current + 3);
+	current += 4;
+
+	for (int i = -1; i <= 1; i += 2) {
+		for (int j = -1; j <= 1; j += 2) {
+			temp.position = Vector<3>(i, j, -1);
+			temp.color = Color((i + j + 2) * multi, (i + j + 2) * multi, 255);
+			vertexes.emplace_back(temp);
+		}
+	}
+	triangles.emplace_back(current, current + 1, current + 2);
+	triangles.emplace_back(current + 1, current + 2, current + 3);
+	current += 4;
+
+
+	return Mesh(vertexes, triangles);
+
+}
+
 
 int main(int argc, char **argv) {
+
+	system("cls");
 
 	Vector<3> vec(1, 2, 3);
 	int a = 1 + 2;
 
 	Core3DContext context(width, height);
 
-	float dist = 2.5;
 	float angle = 0;
 
 	//console::initialize(size, size);
-	present::initialize(GetConsoleWindow(), width, height);
+	present::initialize(GetConsoleWindow(), width, height, 1);
 
 	auto cam_trans =
-		Transformation().translate(Vector<3>(0.0, 0.0, -3.1)).rotate(X, 1.0);
+		Transformation().translate(Vector<3>(0.0, 0.0, -10.0)).rotate(X, 0.7);
 	Camera camera(cam_trans, Size{ (float)width / (float)height, 1.0 });
+
 	context.camera = camera;
 
+
+	auto cube1 = cube();
+	cube1.transformation = Transformation().translate(Position(-2, 0 ,-2));
+
+	auto cube2 = cube();
+	cube2.transformation = Transformation().translate(Position(-2, 0, 2));
+
+	auto cube3 = cube();
+	cube3.transformation = Transformation().translate(Position(2, 0, -2));
+
+	auto cube4 = cube();
+	cube4.transformation = Transformation().translate(Position(2, 0, 2));
+
+
+
+	int frames = 0;
+	auto prev = std::chrono::high_resolution_clock::now();
+
 	while (true) {
-		angle += 0.05f;
+		if (frames == 100) {
+			auto now = std::chrono::high_resolution_clock::now();
+			auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - prev).count();
+			prev = now;
+			frames = 0;
+			printf("FPS=%f\n", 100.0 / (d / 1000.0));
+		}
 
-		context.world_transformation = Transformation().rotate(Y, angle);
-		context.draw_begin();
+		angle += 0.005f;
+		context.transformation_world = Transformation().rotate(Y, angle);
+		context.scene_begin();
 
-		// Lines
 
-		//Line line1;
-		//line1.transformation.translation = Vector<3>(0.0, 0.0, 0.0);
-		//line1.orientation = Vector<3>(0.0, 0.0, 1.0);
-		//Line line2;
-		//line2.transformation.translation = Vector<3>(0.0, 0.0, 0.0);
-		//line2.orientation = Vector<3>(0.0, 1.0, 0.0);
-		//Line line3;
-		//line3.transformation.translation = Vector<3>(0.0, 0.0, 0.0);
-		//line3.orientation = Vector<3>(1.0, 0.0, 0.0);
-		//Line line4;
-		//line4.transformation.translation = Vector<3>(1.0, 0.0, 0.0);
-		//line4.orientation = Vector<3>(-1.0, 1.0, 0.0);
-		//Line line5;
-		//line5.transformation.translation = Vector<3>(0.0, 1.0, 0);
-		//line5.orientation = Vector<3>(0.0, -1.0, 1.0);
-		//Line line6;
-		//line6.transformation.translation = Vector<3>(0.0, 0.0, 1.0);
-		//line6.orientation = Vector<3>(1.0, 0.0, -1.0);
-		//context.draw_line(line1);
-		//context.draw_line(line2);
-		//context.draw_line(line3);
-		//context.draw_line(line4);
-		//context.draw_line(line5);
-		//context.draw_line(line6);
+		int multi = 30;
 
-		 //Polyhedron
-		std::vector<Vertex> vertexes;
-		vertexes.reserve(3);
 
-		Vertex temp;
+		context.draw_mesh(cube1);
+		context.draw_mesh(cube2);
+		context.draw_mesh(cube3);
+		context.draw_mesh(cube4);
 
-		temp.position = Vector<3>(0, 0, 0);
-		temp.color = Color(255, 0, 0);
-		vertexes.emplace_back(temp);
-
-		temp.position = Vector<3>(1, 0, 0);
-		temp.color = Color(0, 255, 0);
-		vertexes.emplace_back(temp);
-
-		temp.position = Vector<3>(0, 1, 0);
-		temp.color = Color(0, 0, 255);
-		vertexes.emplace_back(temp);
-
-		Polyhedron poly = Polyhedron(vertexes);
-		context.draw_polyhedron(poly);
-
-		context.draw_end();
+		context.scene_end();
 
 
 		for (int i = 0; i < width; i++) {
@@ -98,7 +172,7 @@ int main(int argc, char **argv) {
 		}
 		//present::set_pixel(10, 10, Color(200, 200, 100));
 		present::present();
-		Sleep(15);
+		frames++;
 	}
 	system("pause");
 	return EXIT_SUCCESS;

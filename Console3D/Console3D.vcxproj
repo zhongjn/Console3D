@@ -115,12 +115,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="polyhedron.cpp" />
     <ClCompile Include="core3dcontext.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="matrix3.cpp" />
     <ClCompile Include="present.cpp" />
     <ClCompile Include="transformation.cpp" />
     <ClCompile Include="vector3.cpp" />
+    <ClCompile Include="vertexcache.cpp" />
+    <ClCompile Include="vertextriangle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core.h" />

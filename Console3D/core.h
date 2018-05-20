@@ -17,61 +17,67 @@ namespace console3d {
 		template<int _size>
 		class Vector {
 		private:
-			float a[_size] = { 0.0f };
+			float a[_size];
 		public:
-			Vector() {};
+			Vector() {
+				for (int i = 0; i < _size; i++) {
+					a[i] = 0.0f;
+				}
+			};
 
 			template <typename... Args>
 			Vector(Args... args) : a{ float(args)... } {
 				static_assert(sizeof...(Args) == _size, "Wrong number of arguments!");
 			}
 
-			float& operator[](int i) {
+
+			inline float& operator[](int i) {
 				return a[i];
 			}
 
-			float norm() {
+			inline float norm() {
+
 				float accum = 0.0f;
 				for (int i = 0; i < _size; i++) {
-					accum += powf(a[i], 2);
+					accum += a[i] * a[i];
 				}
 				return sqrtf(accum);
 			}
-			Vector<_size> operator*(float factor) {
+			inline Vector<_size> operator*(float factor) {
 				Vector<_size> v2;
 				for (int i = 0; i < _size; i++) {
 					v2[i] = a[i] * factor;
 				}
 				return v2;
 			}
-			Vector<_size> operator/(float factor) {
+			inline Vector<_size> operator/(float factor) {
 				return (*this) * (1.0f / factor);
 			}
-			Vector<_size> operator+(Vector<_size> vec) {
+			inline Vector<_size> operator+(Vector<_size> vec) {
 				Vector<_size> v2;
 				for (int i = 0; i < _size; i++) {
 					v2[i] = a[i] + vec[i];
 				}
 				return v2;
 			}
-			Vector<_size> operator-() {
+			inline Vector<_size> operator-() {
 				Vector<_size> v2;
 				for (int i = 0; i < _size; i++) {
 					v2[i] = -a[i];
 				}
 				return v2;
 			}
-			Vector<_size> operator-(Vector<_size> vec) {
+			inline Vector<_size> operator-(Vector<_size> vec) {
 				return (*this) + (-vec);
 			}
-			float dot(Vector<_size> vec) {
+			inline float dot(Vector<_size> vec) {
 				float accum = 0.0f;
 				for (int i = 0; i < _size; i++) {
 					accum += a[i] * vec[i];
 				}
 				return accum;
 			}
-			float operator*(Vector<_size> vec) {
+			inline float operator*(Vector<_size> vec) {
 				return dot(vec);
 			}
 		};
@@ -116,14 +122,29 @@ namespace console3d {
 
 
 		//顶点
-		class Vertex {
+		struct Vertex {
 		public:
 			Position position;
 			Color color;
 		};
 
+		struct VertexCache {
+		public:
+			Vertex vertex;
+			ScreenCoordXYZ coord;
+			VertexCache(Vertex vertex);
+		};
+
+
 		struct Size {
 			float width, height;
+		};
+
+		struct VertexTriangle {
+		public:
+			int index[3] = { 0 };
+			VertexTriangle();
+			VertexTriangle(int i0, int i1, int i2);
 		};
 
 
@@ -133,26 +154,22 @@ namespace console3d {
 			Transformation transformation;
 		};
 
-		class VertexTriangle {
-		public:
-			int index[3] = { 0 };
-			VertexTriangle(int i0, int i1, int i2);
-		};
 
-		class Polyhedron : public Object {
+		class Mesh : public Object {
 		public:
 			std::vector<Vertex> vertexes;
-			Polyhedron(std::vector<Vertex> vertexes) : vertexes(vertexes) {}
+			std::vector<VertexTriangle> triangles;
+			Mesh(std::vector<Vertex> vertexes, std::vector<VertexTriangle> triangles);
 		};
 
 
-		//线框
-		class Line : public Object {
-		public:
-			Vector<3> orientation;
-			Color color1 = { 0xFF, 0xFF, 0xFF };
-			Color color2 = { 0xFF, 0xFF, 0xFF };
-		};
+		////线框
+		//class Line : public Object {
+		//public:
+		//	Vector<3> orientation;
+		//	Color color1 = { 0xFF, 0xFF, 0xFF };
+		//	Color color2 = { 0xFF, 0xFF, 0xFF };
+		//};
 
 
 		//相机
@@ -161,7 +178,7 @@ namespace console3d {
 			Camera();
 			Camera(Transformation trans, Size lens);
 			Size lens_size;
-			float depth_minimum = 0.0f;
+			float depth_minimum = 1.0f;
 		};
 
 
@@ -178,15 +195,17 @@ namespace console3d {
 			short height, width;
 			Core3DContext(short width, short height); //根据画面高度宽度初始化pixels
 			Pixel* pixels;
-			void draw_begin(); //开始画一帧，还原pixels
-			void draw_end(); //结束画一帧
-			void draw_line(Line &line); //将一条线光栅化到像素上
-			void draw_polyhedron(Polyhedron &polyhedron);
-			Transformation world_transformation;
+			void scene_begin(); //开始画一帧，还原pixels
+			void scene_end(); //结束画一帧
+			//void draw_line(Line &line); //将一条线光栅化到像素上
+			void draw_mesh(Mesh &mesh);
+			Transformation transformation_world;
 			Camera camera;
 		private:
-			Transformation combined_transformation;
-			Transformation camera_detransform;
+			std::vector<VertexCache> buffer_vertexes;
+			std::vector<VertexTriangle> buffer_triangles;
+			Transformation transformation_combined;
+			void rasterize();
 			ScreenCoordXYZ project_to_screen(Vector<3> position);
 		};
 
