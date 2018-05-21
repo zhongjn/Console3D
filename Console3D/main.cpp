@@ -13,7 +13,7 @@ using namespace core;
 const int width = 320, height = 240;
 
 
-Mesh cube() {
+Mesh cube(Position pos) {
 	int multi = 30;
 
 	Vertex temp;
@@ -90,8 +90,10 @@ Mesh cube() {
 	triangles.emplace_back(current + 1, current + 2, current + 3);
 	current += 4;
 
+	Mesh mesh(vertexes, triangles);
+	mesh.transformation = Transformation().translate(pos);
 
-	return Mesh(vertexes, triangles);
+	return mesh;
 
 }
 
@@ -111,24 +113,28 @@ int main(int argc, char **argv) {
 	present::initialize(GetConsoleWindow(), width, height, 1);
 
 	auto cam_trans =
-		Transformation().translate(Vector<3>(0.0, 0.0, -10.0)).rotate(X, 0.7);
+		Transformation().translate(Vector<3>(0.0, 0.0, -30.0)).rotate(X, 0.7);
 	Camera camera(cam_trans, Size{ (float)width / (float)height, 1.0 });
 
 	context.camera = camera;
 
+	const int from = -2;
+	const int to = 2;
+	const int t = to - from + 1;
+	Mesh cubes[t*t*t];
 
-	auto cube1 = cube();
-	cube1.transformation = Transformation().translate(Position(-2, 0 ,-2));
+	int index = 0;
 
-	auto cube2 = cube();
-	cube2.transformation = Transformation().translate(Position(-2, 0, 2));
 
-	auto cube3 = cube();
-	cube3.transformation = Transformation().translate(Position(2, 0, -2));
 
-	auto cube4 = cube();
-	cube4.transformation = Transformation().translate(Position(2, 0, 2));
-
+	for (int i = from; i <= to; i++) {
+		for (int j = from; j <= to; j++) {
+			for (int k = from; k <= to; k++) {
+				cubes[index] = cube(Position(i, j, k) * 4);
+				index++;
+			}
+		}
+	}
 
 
 	int frames = 0;
@@ -136,11 +142,15 @@ int main(int argc, char **argv) {
 
 	while (true) {
 		if (frames == 100) {
+
 			auto now = std::chrono::high_resolution_clock::now();
 			auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - prev).count();
 			prev = now;
 			frames = 0;
-			printf("FPS=%f\n", 100.0 / (d / 1000.0));
+			//SetConsoleTitleA
+			char title[50] = { 0 };
+			sprintf_s(title, "Console3D FPS=%.2f", (float)(100.0 / (d / 1000.0)));
+			SetConsoleTitle(title);
 		}
 
 		angle += 0.005f;
@@ -150,11 +160,10 @@ int main(int argc, char **argv) {
 
 		int multi = 30;
 
+		for (int i = 0; i < t*t*t; i++) {
+			context.draw_mesh(cubes[i]);
+		}
 
-		context.draw_mesh(cube1);
-		context.draw_mesh(cube2);
-		context.draw_mesh(cube3);
-		context.draw_mesh(cube4);
 
 		context.scene_end();
 

@@ -115,7 +115,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="polyhedron.cpp" />
+    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="core3dcontext.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="matrix3.cpp" />

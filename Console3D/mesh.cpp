@@ -5,3 +5,5 @@ console3d::core::Mesh::Mesh(std::vector<Vertex> vertexes, std::vector<VertexTria
 {
 
 }
+
+console3d::core::Mesh::Mesh() {}

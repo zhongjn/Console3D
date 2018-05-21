@@ -159,6 +159,7 @@ namespace console3d {
 		public:
 			std::vector<Vertex> vertexes;
 			std::vector<VertexTriangle> triangles;
+			Mesh();
 			Mesh(std::vector<Vertex> vertexes, std::vector<VertexTriangle> triangles);
 		};
 
