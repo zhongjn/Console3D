@@ -9,8 +9,8 @@ namespace console3d {
 		}
 		Vector<3> Matrix3::operator*(Vector<3> v) {
 			Vector<3> v2;
-			for (int i = 0; i < 3; i++) {
-				for (int k = 0; k < 3; k++) {
+			for (register int i = 0; i < 3; i++) {
+				for (register int k = 0; k < 3; k++) {
 					v2[i] += a[i][k] * v[k];
 				}
 			}
@@ -19,9 +19,9 @@ namespace console3d {
 
 		Matrix3 Matrix3::operator*(Matrix3 m) {
 			Matrix3 m2;
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
-					for (int k = 0; k < 3; k++) {
+			for (register int i = 0; i < 3; i++) {
+				for (register int j = 0; j < 3; j++) {
+					for (register int k = 0; k < 3; k++) {
 						m2[i][j] += a[i][k] * m[k][j];
 					}
 				}
@@ -32,8 +32,8 @@ namespace console3d {
 		Matrix3 Matrix3::operator*(float factor)
 		{
 			Matrix3 m2;
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
+			for (register int i = 0; i < 3; i++) {
+				for (register int j = 0; j < 3; j++) {
 					m2[i][j] = a[i][j] * factor;
 				}
 			}
@@ -48,8 +48,8 @@ namespace console3d {
 		Matrix3 Matrix3::operator+(Matrix3 m)
 		{
 			Matrix3 m2;
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
+			for (register int i = 0; i < 3; i++) {
+				for (register int j = 0; j < 3; j++) {
 					m2[i][j] = a[i][j] + m[i][j];
 				}
 			}
@@ -76,7 +76,7 @@ namespace console3d {
 
 		Matrix3 Matrix3::identity() {
 			Matrix3 m;
-			for (int i = 0; i < 3; i++) {
+			for (register int i = 0; i < 3; i++) {
 				m[i][i] = 1.0f;
 			}
 			return m;
@@ -104,8 +104,8 @@ namespace console3d {
 			m[2][1] = r[0];  // a32 = rx;
 
 			Matrix3 rrT;
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
+			for (register int i = 0; i < 3; i++) {
+				for (register int j = 0; j < 3; j++) {
 					rrT[i][j] = r[i] * r[j];
 				}
 			}
@@ -116,7 +116,7 @@ namespace console3d {
 
 		Matrix3 Matrix3::from_scale(float scale) {
 			Matrix3 m;
-			for (int i = 0; i < 3; i++) {
+			for (register int i = 0; i < 3; i++) {
 				m[i][i] = scale;
 			}
 			return m;

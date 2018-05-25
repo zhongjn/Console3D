@@ -1,5 +1,7 @@
 #include "present.h"
 #include <Windows.h>
+#include "core.h"
+
 namespace console3d {
 	namespace present {
 		struct tempcolor {
@@ -10,7 +12,7 @@ namespace console3d {
 		static int psize;
 		static int owidth, oheight;
 		static int width, height;
-		static tempcolor* pixels;
+		static tempcolor* buffer_pixels;
 		static HWND myhwnd;
 		static HDC mydc, memdc;
 		static HBITMAP hb;
@@ -38,7 +40,7 @@ namespace console3d {
 
 			void* bmpdata = nullptr;
 			hb = CreateDIBSection(memdc, &binfo, 0, &bmpdata, nullptr, 0);
-			pixels = (tempcolor*)bmpdata;
+			buffer_pixels = (tempcolor*)bmpdata;
 			SelectObject(memdc, hb);
 		}
 
@@ -67,7 +69,15 @@ namespace console3d {
 			c.b = (BYTE)color[2];
 			for (int i = 0; i < psize; i++) {
 				for (int j = 0; j < psize; j++) {
-					pixels[((oheight - 1 - y) * psize + j) * width + (x * psize + i)] = c;
+					buffer_pixels[((oheight - 1 - y) * psize + j) * width + (x * psize + i)] = c;
+				}
+			}
+		}
+		void set_all_pixels(core::Core3DContext &context)
+		{
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					present::set_pixel(i, j, context.get_scene_output(i, j));
 				}
 			}
 		}

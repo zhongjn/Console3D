@@ -1,7 +1,10 @@
+#define _USE_MATH_DEFINES
 #include "core.h"
 #include <cfloat>
 #include <algorithm>
 #include <functional>
+#include <cmath>
+
 namespace console3d {
 	namespace core {
 
@@ -20,16 +23,18 @@ namespace console3d {
 			float det;
 		};
 
+
 		bilinear_info prepare_bilinear_info(ScreenCoordXYZ s[3]);
 		ScreenCoordXY xyz_to_xy(ScreenCoordXYZ s);
-		Vector<3> get_corrected_bilinear(ScreenCoordXY u, bilinear_info &info);
+		BilinearCoeffient get_corrected_bilinear(ScreenCoordXY u, bilinear_info &info);
 		Vector<2> vec2_decompose_fast(Vector<2> b[2], Vector<2> vec, float det);
 		Vector<2> vec2_decompose(Vector<2> b[2], Vector<2> vec, bool &ok);
-
-#pragma endregion
+		Vector<2> vec2_decompose(Vector<2> basis[2], Vector<2> vec, bool &ok);
+		Vector<3> vec3_crossproduct(Vector<3> v[2]);
+		Color color_mix(Color c1, Color c2);
 
 		template<typename T>
-		void boundary_limit(T& x, T min, T max) {
+		inline void boundary_limit(T& x, T min, T max) {
 			if (x < min) {
 				x = min;
 			}
@@ -39,203 +44,114 @@ namespace console3d {
 		}
 
 		template<typename TS, typename F, typename TV = std::result_of<F(TS)>::type>
-		TV apply_bilinear(TS sources[3], Vector<3> coeffients, F& func) {
+		inline TV apply_bilinear(TS sources[3], Vector<3> coefficients, F& func) {
 			TV accum = TV();
 			for (int i = 0; i < 3; i++) {
-				accum = accum + func(sources[i]) * coeffients[i];
+				accum = accum + func(sources[i]) * coefficients[i];
 			}
 			return accum;
 		}
 
-		Vector<2> vec2_decompose(Vector<2> basis[2], Vector<2> vec, bool &ok);
-		Vector<2> xyz_to_xy(ScreenCoordXYZ s);
+		template<typename TS, typename F, typename TV = std::result_of<F(TS)>::type>
+		TV apply_bilinear(TS sources[], int index[3], Vector<3> coefficients, F& func) {
+			TV accum = TV();
+			for (int i = 0; i < 3; i++) {
+				accum = accum + func(sources[index[i]]) * coefficients[i];
+			}
+			return accum;
+		}
+
+#pragma endregion
 
 		Core3DContext::Core3DContext(short w, short h) {
 			height = h;
 			width = w;
-			pixels = new Pixel[height * width];
-			buffer_triangles.reserve(reserve_triangle_count);
-			buffer_vertexes.reserve(reserve_vertex_count);
+			buffer_pixels = new Pixel[height * width];
+			output = new Color[height * width];
+			triangles.reserve(reserve_triangle_count);
+			vertexes.reserve(reserve_vertex_count);
 		}
 
 		void Core3DContext::scene_begin() {
 			for (int i = 0; i < height * width; i++) {
-				pixels[i].color = { 0, 0, 0 };
-				pixels[i].depth = FLT_MAX;
+				buffer_pixels[i].triangle = nullptr;
+				buffer_pixels[i].depth = FLT_MAX;
 			}
 			transformation_combined = camera.transformation.inverse() * transformation_world;
-			buffer_triangles.clear();
-			buffer_vertexes.clear();
+			triangles.clear();
+			vertexes.clear();
 		}
 
 		void Core3DContext::scene_end() {
 
-			for (auto &vc : buffer_vertexes) {
-				vc.coord = project_to_screen(vc.vertex.position);
+			for (auto &vc : vertexes) {
+				vc.coord = project_to_screen(vc.position);
 			}
-			// 光栅化三角形
+			vertex_shade();
+			cull();
+			clip_z();
 			rasterize();
+			pixel_shade();
 		}
+
 
 
 		void Core3DContext::draw_mesh(Mesh &mesh) {
 
-			int vi = buffer_vertexes.size();
+			int vi = vertexes.size();
 			Transformation trans = transformation_combined * mesh.transformation;
 
 			for (auto v : mesh.vertexes) {
 				//副本v
 				v.position = trans.apply(v.position, true);
-				buffer_vertexes.emplace_back(v); // 就地构造VertexCache
+				vertexes.emplace_back(v); // 就地构造VertexCache
 			}
 
-			for (auto &t : mesh.triangles) {
-				buffer_triangles.emplace_back(t.index[0] + vi, t.index[1] + vi, t.index[2] + vi);
+			for (auto t : mesh.triangles) {
+				//副本t
+				for (int i = 0; i < 3; i++) {
+					t.index[i] += vi;
+				}
+				t.roughness = mesh.roughness;
+				triangles.emplace_back(t);
 			}
-
-
-			//std::vector<Vertex> vertexes_all(mesh.vertexes);
-			//if (vertexes_all.size() >= 3) { // 至少形成一个三角形
-			//	auto trans = mesh.transformation;
-			//	std::vector<ScreenCoordXYZ> coords_all;
-			//	coords_all.reserve(vertexes_all.size());
-			//	for (auto &v : vertexes_all) {
-			//		v.position = trans.apply(v.position, true);
-			//		coords_all.emplace_back(project_to_screen(v.position));
-			//	}
-			//	for (auto &triangle : mesh.triangles) {
-			//		ScreenCoordXYZ coords[3];
-			//		Vertex vertexes[3];
-			//		for (int i = 0; i < 3; i++) {
-			//			coords[i] = coords_all[triangle.index[i]];
-			//			vertexes[i] = vertexes_all[triangle.index[i]];
-			//		}
-
-			//		Vector<3> vecs[3] = { coords[1] - coords[0] , coords[2] - coords[1], coords[0] - coords[2] };
-			//		int horizontal_index = -1;
-			//		bool all_horizontal = false;
-			//		for (int j = 0; j < 3; j++) {
-			//			if (vecs[j][Y] == 0.0f) {
-			//				if (horizontal_index == -1) {
-			//					horizontal_index = j;
-			//				}
-			//				else {
-			//					all_horizontal = true;
-			//					break;
-			//				}
-			//			}
-			//		}
-			//		if (all_horizontal) continue;
-
-
-			//		//确定三点中最大与最小的y值
-			//		float ymin = FLT_MAX, ymax = FLT_MIN;
-			//		for (int j = 0; j < 3; j++) {
-			//			float y = coords[j][Y];
-			//			if (y < ymin) {
-			//				ymin = y;
-			//			}
-			//			if (y > ymax) {
-			//				ymax = y;
-			//			}
-			//		}
-
-
-			//		//
-			//		int y_start = int(ceilf(ymin) + 0.5); // +0.5四舍五入，防止浮点误差
-			//		int y_end = int(floorf(ymax) + 0.5);
-			//		boundary_limit(y_start, 0, height - 1);
-			//		boundary_limit(y_end, 0, height - 1);
-
-			//		for (int px_y = y_start; px_y <= y_end; px_y++) {
-			//			int count = 0;
-			//			float x_inter[3];
-			//			for (int j = 0; j < 3; j++) {
-			//				if (j == horizontal_index) continue; // 扫描线不与水平线求交
-			//				ScreenCoordXYZ &from = coords[j];
-			//				ScreenCoordXYZ &to = coords[(j + 1) % 3];
-			//				if ((px_y - from[Y]) * (px_y - to[Y]) <= 0) { //交点存在
-			//					float k = (px_y - coords[j][Y]) / vecs[j][Y];
-			//					x_inter[count] = vecs[j][X] * k + coords[j][X];
-			//					count++;
-			//				}
-			//			}
-
-			//			float xmin = FLT_MAX, xmax = FLT_MIN;
-			//			for (int j = 0; j < count; j++) {
-			//				float x = x_inter[j];
-			//				if (x < xmin) {
-			//					xmin = x;
-			//				}
-			//				if (x > xmax) {
-			//					xmax = x;
-			//				}
-			//			}
-
-			//			if (count == 2) { // 扫到了！
-			//				//if (x_inter[0] > x_inter[1]) std::swap(x_inter[0], x_inter[1]);
-			//				int x_start, x_end;
-			//				x_start = int(ceilf(xmin) + 0.5);
-			//				x_end = int(floorf(xmax) + 0.5);
-
-			//				boundary_limit(x_start, 0, width - 1);
-			//				boundary_limit(x_end, 0, width - 1);
-
-			//				for (int px_x = x_start; px_x <= x_end; px_x++) {
-			//					ScreenCoordXY u(px_x, px_y);
-			//					Vector<3> k = get_corrected_bilinear(coords, u);
-
-			//					float depth = apply_bilinear(coords, k, [](ScreenCoordXYZ coord) {return coord[Z]; });
-			//					Pixel &p = pixels[px_y * width + px_x];
-			//					if (depth >= camera.depth_minimum && depth < p.depth) {
-			//						p.color = apply_bilinear(vertexes, k, [](Vertex vert) {return vert.color; });
-			//						p.depth = depth;
-			//					}
-			//				}
-			//			}
-			//		}
-			//	}
-			//}
 		}
 
+		void Core3DContext::set_ambient_light(AmbientLight &light)
+		{
+			ambient_light = light;
+		}
 
-		//void Core3DContext::draw_line(Line &line) {
+		void Core3DContext::set_point_light(std::vector<PointLight> &lights)
+		{
+			point_lights = lights; // 深拷贝一份
+			for (auto &light : point_lights) {
+				light.position = transformation_combined.apply(light.position, true);
+			}
+		}
 
-		//	Vector<3> start = line.transformation.apply(Vector<3>(), true);
-		//	Vector<3> end = line.transformation.apply(line.orientation, true);
-		//	ScreenCoordXYZ coord_start = project_to_screen(start);
-		//	ScreenCoordXYZ coord_end = project_to_screen(end);
+		void Core3DContext::vertex_shade()
+		{
+		}
 
-		//	ScreenCoordXYZ screen_dir = coord_end - coord_start;
-		//	float len = screen_dir.norm();
-		//	ScreenCoordXYZ step = screen_dir / len / 2;
-		//	ScreenCoordXYZ cur = coord_start;
-		//	for (int i = 0; i < len * 2; i++) {
-		//		float depth = cur[2];
-		//		if (depth >= camera.depth_minimum) {
-		//			int x = (int)(cur[X]);
-		//			int y = (int)(cur[Y]);
-		//			if (x >= 0 && x < width && y >= 0 && y < height) {
-		//				Pixel &p = pixels[y * width + x];
-		//				if (depth < p.depth) {
-		//					p.color = Color(255.0, 255.0, 255.0);
-		//				}
-		//			}
-		//		}
-		//		cur = cur + step;
-		//	}
-		//}
+		void Core3DContext::cull()
+		{
+		}
+
+		void Core3DContext::clip_z()
+		{
+		}
 
 		void Core3DContext::rasterize() {
-			for (auto &triangle : buffer_triangles) {
+			for (auto &triangle : triangles) {
 				ScreenCoordXYZ coords[3];
 
-			
-				Vertex vertexes[3];
+
+				Vertex mvertexes[3];
 				for (int i = 0; i < 3; i++) {
-					auto &vc = buffer_vertexes[triangle.index[i]];
+					auto &vc = vertexes[triangle.index[i]];
 					coords[i] = vc.coord;
-					vertexes[i] = vc.vertex;
+					mvertexes[i] = vc;
 				}
 
 				auto info = prepare_bilinear_info(coords);
@@ -302,7 +218,7 @@ namespace console3d {
 						}
 					}
 
-					if (count == 2) { // 扫到了！
+					if (count >= 2) { // 扫到了！
 									  //if (x_inter[0] > x_inter[1]) std::swap(x_inter[0], x_inter[1]);
 						int x_start, x_end;
 						x_start = int(ceilf(x_inter_min) + 0.5);
@@ -314,11 +230,14 @@ namespace console3d {
 						for (int px_x = x_start; px_x <= x_end; px_x++) {
 							ScreenCoordXY u(px_x, px_y);
 							Vector<3> k = get_corrected_bilinear(u, info);
+							int bb = 0;
 
 							float depth = apply_bilinear(coords, k, [](ScreenCoordXYZ coord) {return coord[Z]; });
-							Pixel &p = pixels[px_y * width + px_x];
+
+							Pixel &p = get_pixel(px_x, px_y);
 							if (depth >= camera.depth_minimum && depth < p.depth) {
-								p.color = apply_bilinear(vertexes, k, [](Vertex vert) {return vert.color; });
+								p.triangle = &triangle;
+								p.bilinear_coefficient = k;
 								p.depth = depth;
 							}
 						}
@@ -328,7 +247,92 @@ namespace console3d {
 
 		}
 
-		ScreenCoordXYZ Core3DContext::project_to_screen(Vector<3> pos) {
+		void Core3DContext::pixel_shade()
+		{
+			int pl_n = point_lights.size();
+			PointLight* pl = &point_lights[0];
+
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					Pixel &p = get_pixel(i, j);
+					Color out;
+					if (p.triangle != nullptr) {
+
+						Color origin = apply_bilinear(vertexes.data(), p.triangle->index, p.bilinear_coefficient, [](Vertex v) { return v.color; });
+						compute_triangle_normal(p.triangle);
+						Vector<3> normal = p.triangle->normal;
+
+						Position pos = apply_bilinear(vertexes.data(), p.triangle->index, p.bilinear_coefficient, [](Vertex v) { return v.position; });
+
+						out = origin * 0.3;
+
+						
+						for (int ip = 0; ip < pl_n; ip++) {
+							PointLight &light = pl[ip];
+							Vector<3> light_in = (light.position - pos).normalize(); // 入射向量，指向光源
+							Vector<3> obsv = -pos.normalize(); // 观察向量，指向观察者
+							
+							float t1 = light_in.dot(normal);
+							float t2 = obsv.dot(normal);
+							float test = t1 * t2;  // 若>0，则光源与观察者在平面同一侧
+							if (test > 0) {
+								if (t2 < 0) {
+									p.triangle->normal = normal = -normal;
+								}
+								//Vector<3> light_out = normal * (light_in.dot(normal) * 2) - light_in;
+
+								// 反射光，土制的正态模型，试试效果
+								//Vector<3> half = (light_in + obsv).normalize();
+								//float cos = light_out.dot(obsv);
+								//float angle = acosf(cos);
+								//float k_refl = expf(-angle * angle / 2 / roughness / roughness) / 2 / M_PI / roughness; // 反射系数
+								//
+								//// 几何修正
+								//float cg = 2 * half.dot(normal) / half.dot(obsv);
+								//float cc = fminf(normal.dot(obsv), normal.dot(light_in));
+								//float g = fminf(1, cc * cg);
+								//k_refl *= g;
+								//out = out + light.color * (k_refl * light.intensity);
+
+								// Lambert
+								float cos = light_in.dot(normal);
+								auto vt = light.position - pos;
+								float decay = 1 / vt.dot(vt);
+								out = out + light.color * (cos * light.intensity * decay);
+							}
+						}
+
+						// 环境光
+						out = out + ambient_light.color * ambient_light.intensity;
+					}
+
+					output[j * width + i] = out;
+				}
+			}
+		}
+
+		void Core3DContext::compute_triangle_normal(Triangle * triangle)
+		{
+			if (triangle != nullptr) {
+				if (!triangle->normal_computed) {
+					Vector<3> v[2];
+					for (int i = 0; i < 2; i++) {
+						v[i] = vertexes[triangle->index[i + 1]].position - vertexes[triangle->index[0]].position;
+					}
+					Vector<3> out;
+					out = vec3_crossproduct(v);
+					triangle->normal = out / out.norm();
+					triangle->normal_computed = true;
+				}
+			}
+		}
+
+		Pixel & Core3DContext::get_pixel(int i, int j)
+		{
+			return buffer_pixels[j * width + i];
+		}
+
+		ScreenCoordXYZ Core3DContext::project_to_screen(Position pos) {
 			// (x,y)=ScreenCoord, x=vertical, y=horizontal, TopLeft=(0,0), BottomRight=(width,height)
 			// z = depth
 			Vector<3> temp;
@@ -346,16 +350,7 @@ namespace console3d {
 			return coord;
 		}
 
-		//Vector<3> perspect_bilinear_correct(float z[3], Vector<3> bilinear)
-		//{
-		//	Vector<3> vec;
-		//	float denom = 0.0f;
-		//	for (int i = 0; i < 3; i++) {
-		//		denom += bilinear[i] * z[i];
-		//		vec[i] = bilinear[i] / z[i];
-		//	}
-		//	return vec / denom;
-		//}
+
 
 		ScreenCoordXY xyz_to_xy(ScreenCoordXYZ s) {
 			Vector<2> ret;
@@ -392,22 +387,21 @@ namespace console3d {
 			}
 
 			return info;
-			
+
 		}
 
 
-		Vector<3> get_corrected_bilinear(ScreenCoordXY u, bilinear_info &info) {
+		BilinearCoeffient get_corrected_bilinear(ScreenCoordXY u, bilinear_info &info) {
 			if (info.ok) {
 				Vector<2> vec = u - info.base;
 				Vector<2> k12 = vec2_decompose_fast(info.basis, vec, info.det);
-
 				Vector<3> k(1 - k12[0] - k12[1], k12[0], k12[1]);
-
 				Vector<3> out;
 				float denom = 0.0f;
 				for (int i = 0; i < 3; i++) {
-					denom += k[i] / info.z[i];
-					out[i] = k[i] / info.z[i];
+					float f = k[i] / info.z[i];
+					denom += f;
+					out[i] = f;
 				}
 				return out / denom;
 			}
@@ -418,8 +412,8 @@ namespace console3d {
 
 		Vector<2> vec2_decompose_fast(Vector<2> b[2], Vector<2> vec, float det) {
 			Vector<2> ret;
-			ret[0] = b[1][1] * vec[0] - b[1][0] * vec[1];
-			ret[1] = -b[0][1] * vec[0] + b[0][0] * vec[1];
+			ret[0] = (b[1][1] * vec[0] - b[1][0] * vec[1]);
+			ret[1] = (-b[0][1] * vec[0] + b[0][0] * vec[1]);
 			return ret / det;
 		}
 
@@ -427,7 +421,6 @@ namespace console3d {
 		{
 			float det = b[0][0] * b[1][1] - b[1][0] * b[0][1];
 			float sin = det / b[0].norm() / b[1].norm();
-			//float sin = det * det / (b[0][0] * b[0][0] + b[0][1] * b[0][1]) / (b[1][0] * b[1][0] + b[1][1] * b[1][1]);
 			if (fabs(sin) <= basis_abs_sin_threshold) {
 				ok = false;
 				return Vector<2>();
@@ -436,5 +429,21 @@ namespace console3d {
 
 		}
 
+		Vector<3> vec3_crossproduct(Vector<3> v[2])
+		{
+			Vector<3> out;
+			out[0] = v[0][1] * v[1][2] - v[0][2] * v[1][1];
+			out[1] = v[0][2] * v[1][0] - v[0][0] * v[1][2];
+			out[2] = v[0][0] * v[1][1] - v[0][1] * v[1][0];
+			return out;
+		}
+		Color color_mix(Color c1, Color c2)
+		{
+			Color out;
+			for (int i = 0; i < 3; i++) {
+				out[i] = c1[i] * c2[i]; // 交给编译器优化
+			}
+			return out / 255.0f;
+		}
 	}
 }

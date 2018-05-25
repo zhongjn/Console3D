@@ -14,20 +14,20 @@ const int width = 320, height = 240;
 
 
 Mesh cube(Position pos) {
-	int multi = 30;
+	int multi = 0;
 
 	Vertex temp;
-	VertexTriangle triangle;
+	Triangle triangle;
 
 	std::vector<Vertex> vertexes;
-	std::vector<VertexTriangle> triangles;
+	std::vector<Triangle> triangles;
 
 	int current = 0;
 	for (int i = -1; i <= 1; i += 2) {
 		for (int j = -1; j <= 1; j += 2) {
 			int t = (i + j + 2) * 60;
 			temp.position = Vector<3>(1, i, j);
-			temp.color = Color(255, (i + j + 2) * multi, (i + j + 2) * multi);
+			temp.color = Color(255, 0, 0);
 			vertexes.emplace_back(temp);
 		}
 	}
@@ -38,7 +38,7 @@ Mesh cube(Position pos) {
 	for (int i = -1; i <= 1; i += 2) {
 		for (int j = -1; j <= 1; j += 2) {
 			temp.position = Vector<3>(-1, i, j);
-			temp.color = Color(255, (i + j + 2) * multi, (i + j + 2) * multi);
+			temp.color = Color(255, 0, 0);
 			vertexes.emplace_back(temp);
 		}
 	}
@@ -49,7 +49,7 @@ Mesh cube(Position pos) {
 	for (int i = -1; i <= 1; i += 2) {
 		for (int j = -1; j <= 1; j += 2) {
 			temp.position = Vector<3>(i, 1, j);
-			temp.color = Color((i + j + 2) * multi, 255, (i + j + 2) * multi);
+			temp.color = Color(255, 0, 0);
 			vertexes.emplace_back(temp);
 		}
 	}
@@ -60,7 +60,7 @@ Mesh cube(Position pos) {
 	for (int i = -1; i <= 1; i += 2) {
 		for (int j = -1; j <= 1; j += 2) {
 			temp.position = Vector<3>(i, -1, j);
-			temp.color = Color((i + j + 2) * multi, 255, (i + j + 2) * multi);
+			temp.color = Color(255, 0, 0);
 			vertexes.emplace_back(temp);
 		}
 	}
@@ -71,7 +71,7 @@ Mesh cube(Position pos) {
 	for (int i = -1; i <= 1; i += 2) {
 		for (int j = -1; j <= 1; j += 2) {
 			temp.position = Vector<3>(i, j, 1);
-			temp.color = Color((i + j + 2) * multi, (i + j + 2) * multi, 255);
+			temp.color = Color(255, 0, 0);
 			vertexes.emplace_back(temp);
 		}
 	}
@@ -82,7 +82,7 @@ Mesh cube(Position pos) {
 	for (int i = -1; i <= 1; i += 2) {
 		for (int j = -1; j <= 1; j += 2) {
 			temp.position = Vector<3>(i, j, -1);
-			temp.color = Color((i + j + 2) * multi, (i + j + 2) * multi, 255);
+			temp.color = Color(255, 0, 0);
 			vertexes.emplace_back(temp);
 		}
 	}
@@ -113,20 +113,17 @@ int main(int argc, char **argv) {
 	present::initialize(GetConsoleWindow(), width, height, 1);
 
 	auto cam_trans =
-		Transformation().translate(Vector<3>(0.0, 0.0, -30.0)).rotate(X, 0.7);
+		Transformation().translate(Vector<3>(0.0, 0, -20.0)).rotate(X, 0.5);
 	Camera camera(cam_trans, Size{ (float)width / (float)height, 1.0 });
 
 	context.camera = camera;
 
-	const int from = -2;
-	const int to = 2;
+	const int from = -1;
+	const int to = 1;
 	const int t = to - from + 1;
+
 	Mesh cubes[t*t*t];
-
 	int index = 0;
-
-
-
 	for (int i = from; i <= to; i++) {
 		for (int j = from; j <= to; j++) {
 			for (int k = from; k <= to; k++) {
@@ -136,6 +133,15 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	AmbientLight ambient_light;
+	ambient_light.intensity = 0.0;
+
+	std::vector<PointLight> point_light;
+
+	PointLight p1;
+	p1.position = Position(1.5, 0, -1.5);
+	p1.intensity = 5;
+	point_light.emplace_back(p1);
 
 	int frames = 0;
 	auto prev = std::chrono::high_resolution_clock::now();
@@ -154,13 +160,18 @@ int main(int argc, char **argv) {
 		}
 
 		angle += 0.005f;
-		context.transformation_world = Transformation().rotate(Y, angle);
+		//context.transformation_world = Transformation().rotate(Y, angle);
 		context.scene_begin();
 
+		context.set_ambient_light(ambient_light);
+		context.set_point_light(point_light);
 
 		int multi = 30;
 
+		
+
 		for (int i = 0; i < t*t*t; i++) {
+			cubes[i].transformation = cubes[i].transformation.rotate(Y, 0.01f);
 			context.draw_mesh(cubes[i]);
 		}
 
@@ -168,17 +179,18 @@ int main(int argc, char **argv) {
 		context.scene_end();
 
 
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				Color color = context.pixels[j * width + i].color;
-				present::set_pixel(i, j, color);
-				//char ch = ' ';
-				//if (color[0] >= 127 && color[1] >= 127 && color[2] >= 127) {
-				//	ch = '*';
-				//}
-				//console::set_char(i, j, ch);
-			}
-		}
+		//for (int i = 0; i < width; i++) {
+		//	for (int j = 0; j < height; j++) {
+		//		Color color = context.get_pixel(i, j).color;
+		//		present::set_pixel(i, j, color);
+		//		//char ch = ' ';
+		//		//if (color[0] >= 127 && color[1] >= 127 && color[2] >= 127) {
+		//		//	ch = '*';
+		//		//}
+		//		//console::set_char(i, j, ch);
+		//	}
+		//}
+		present::set_all_pixels(context);
 		//present::set_pixel(10, 10, Color(200, 200, 100));
 		present::present();
 		frames++;

@@ -4,8 +4,6 @@
 #include <vector>
 #include <type_traits>
 
-//using namespace std;
-
 namespace console3d {
 	namespace core {
 
@@ -17,10 +15,11 @@ namespace console3d {
 		template<int _size>
 		class Vector {
 		private:
-			float a[_size];
+			
 		public:
+			float a[_size];
 			Vector() {
-				for (int i = 0; i < _size; i++) {
+				for (register int i = 0; i < _size; i++) {
 					a[i] = 0.0f;
 				}
 			};
@@ -38,14 +37,18 @@ namespace console3d {
 			inline float norm() {
 
 				float accum = 0.0f;
-				for (int i = 0; i < _size; i++) {
+				for (register int i = 0; i < _size; i++) {
 					accum += a[i] * a[i];
 				}
 				return sqrtf(accum);
 			}
+			inline Vector<_size> normalize() {
+				return (*this) / norm();
+			}
+
 			inline Vector<_size> operator*(float factor) {
 				Vector<_size> v2;
-				for (int i = 0; i < _size; i++) {
+				for (register int i = 0; i < _size; i++) {
 					v2[i] = a[i] * factor;
 				}
 				return v2;
@@ -55,14 +58,14 @@ namespace console3d {
 			}
 			inline Vector<_size> operator+(Vector<_size> vec) {
 				Vector<_size> v2;
-				for (int i = 0; i < _size; i++) {
+				for (register int i = 0; i < _size; i++) {
 					v2[i] = a[i] + vec[i];
 				}
 				return v2;
 			}
 			inline Vector<_size> operator-() {
 				Vector<_size> v2;
-				for (int i = 0; i < _size; i++) {
+				for (register int i = 0; i < _size; i++) {
 					v2[i] = -a[i];
 				}
 				return v2;
@@ -72,7 +75,7 @@ namespace console3d {
 			}
 			inline float dot(Vector<_size> vec) {
 				float accum = 0.0f;
-				for (int i = 0; i < _size; i++) {
+				for (register int i = 0; i < _size; i++) {
 					accum += a[i] * vec[i];
 				}
 				return accum;
@@ -87,6 +90,7 @@ namespace console3d {
 		typedef Vector<3> ScreenCoordXYZ;
 		typedef Vector<3> Color;
 		typedef Vector<3> Position;
+		typedef Vector<3> BilinearCoeffient;
 
 		//变换矩阵
 		class Matrix3 {
@@ -121,60 +125,87 @@ namespace console3d {
 		};
 
 
-		//顶点
-		struct Vertex {
-		public:
-			Position position;
-			Color color;
-		};
-
-		struct VertexCache {
-		public:
-			Vertex vertex;
-			ScreenCoordXYZ coord;
-			VertexCache(Vertex vertex);
-		};
-
 
 		struct Size {
 			float width, height;
 		};
 
-		struct VertexTriangle {
+
+
+
+		//顶点
+		struct Vertex {
+			friend class Core3DContext;
+		public:
+			Position position;
+			Color color;
+		private:
+			ScreenCoordXYZ coord;
+		};
+
+
+		struct Triangle {
+			friend class Core3DContext;
 		public:
 			int index[3] = { 0 };
-			VertexTriangle();
-			VertexTriangle(int i0, int i1, int i2);
+			Triangle();
+			Triangle(int i0, int i1, int i2);
+		private:
+			bool backface_cull = false;
+			bool culled = false;
+			bool normal_computed = false;
+			float roughness = 1.0f;
+			Vector<3> normal;
+		};
+
+		//像素
+		struct Pixel {
+			friend class Core3DContext;
+		public:
+			float depth = 0.0; //深度
+			//Color color = { 0, 0, 0 };
+		private:
+			Triangle *triangle = nullptr;
+			BilinearCoeffient bilinear_coefficient;
 		};
 
 
 		//3D物体最基本的单位
-		class Object {
+		struct Object {
 		public:
 			Transformation transformation;
 		};
 
 
-		class Mesh : public Object {
+		struct Light{
 		public:
-			std::vector<Vertex> vertexes;
-			std::vector<VertexTriangle> triangles;
-			Mesh();
-			Mesh(std::vector<Vertex> vertexes, std::vector<VertexTriangle> triangles);
+			Color color = { 255, 255, 255 };
+			float intensity = 1.0f;
+		};
+
+		struct AmbientLight : public Light {
+			
+		};
+
+		struct PointLight : public Light {
+			Position position;
 		};
 
 
-		////线框
-		//class Line : public Object {
-		//public:
-		//	Vector<3> orientation;
-		//	Color color1 = { 0xFF, 0xFF, 0xFF };
-		//	Color color2 = { 0xFF, 0xFF, 0xFF };
-		//};
+		struct Mesh : public Object {
+		public:
+			std::vector<Vertex> vertexes;
+			std::vector<Triangle> triangles;
+			bool backface_cull = false;
+			float roughness = 1.0f;
+			Mesh();
+			Mesh(std::vector<Vertex> vertexes, std::vector<Triangle> triangles);
+		};
+
 
 
 		//相机
-		class Camera : public Object {
+		struct Camera : public Object {
 		public:
 			Camera();
 			Camera(Transformation trans, Size lens);
@@ -182,32 +213,39 @@ namespace console3d {
 			float depth_minimum = 1.0f;
 		};
 
-
-		//像素
-		class Pixel {
-		public:
-			float depth = 0.0; //深度
-			Color color = { 0, 0, 0 };
-		};
-
-
 		class Core3DContext {
 		public:
 			short height, width;
 			Core3DContext(short width, short height); //根据画面高度宽度初始化pixels
-			Pixel* pixels;
+			inline Color get_scene_output(int x, int y) {
+				return output[y * width + x];
+			}
 			void scene_begin(); //开始画一帧，还原pixels
 			void scene_end(); //结束画一帧
-			//void draw_line(Line &line); //将一条线光栅化到像素上
 			void draw_mesh(Mesh &mesh);
+			void set_ambient_light(AmbientLight &light);
+			void set_point_light(std::vector<PointLight> &lights);
 			Transformation transformation_world;
 			Camera camera;
 		private:
-			std::vector<VertexCache> buffer_vertexes;
-			std::vector<VertexTriangle> buffer_triangles;
+			// 私有变量
+			Pixel* buffer_pixels;
+			Color* output;
+			std::vector<Vertex> vertexes;
+			std::vector<Triangle> triangles;
+			AmbientLight ambient_light;
+			std::vector<PointLight> point_lights;
 			Transformation transformation_combined;
+			// 工具函数
+			Pixel& get_pixel(int i, int j);
+			ScreenCoordXYZ project_to_screen(Position pos);
+			// 渲染管线
+			void vertex_shade();
+			void cull();
+			void clip_z();
 			void rasterize();
-			ScreenCoordXYZ project_to_screen(Vector<3> position);
+			void pixel_shade();
+			void compute_triangle_normal(Triangle *triangle);
 		};
 
 	}

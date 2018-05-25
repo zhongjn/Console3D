@@ -7,5 +7,6 @@ namespace console3d {
 		void close();
 		void present();
 		void set_pixel(int x, int y, core::Color color);
+		void set_all_pixels(core::Core3DContext &context);
 	}
 }
