@@ -5,6 +5,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <chrono>
+#include <conio.h>
 
 using namespace my3d;
 const int width = 320, height = 240;
@@ -19,7 +20,10 @@ const float block_dist = 1.6f;
 const float block_size = 1.0f;
 const Color block_color = Color(120, 120, 120);
 
-const int start_i = 0, start_j = 3;
+const int steps_per_block = 40;
+const float step = block_dist / steps_per_block;
+
+const int start_i = 10, start_j = 10;
 
 enum direction {
 	i_p = 0, // iÕý·½Ïò
@@ -96,17 +100,74 @@ Mesh get_snake_head() {
 	return out;
 }
 
+Mesh get_snake_body() {
+	std::vector<Vertex> vs;
+	Vertex v;
+	v.color = { 255, 0, 0 };
+	vs.emplace_back(v);
+	v.position = { -0.300000,0.000000,-0.600000 }; vs.emplace_back(v);
+	v.position = { -0.300000,0.000000,0.000000 }; vs.emplace_back(v);
+	v.position = { 0.300000,0.000000,0.000000 }; vs.emplace_back(v);
+	v.position = { 0.300000,0.000000,-0.600000 }; vs.emplace_back(v);
+	v.position = { -0.300000,0.250000,-0.600000 }; vs.emplace_back(v);
+	v.position = { -0.300000,0.250000,0.000000 }; vs.emplace_back(v);
+	v.position = { 0.300000,0.250000,-0.600000 }; vs.emplace_back(v);
+	v.position = { 0.300000,0.250000,0.000000 }; vs.emplace_back(v);
+
+	std::vector<Triangle> ts;
+	ts.emplace_back(1, 2, 3);
+	ts.emplace_back(1, 3, 4);
+	ts.emplace_back(2, 1, 5);
+	ts.emplace_back(2, 5, 6);
+	ts.emplace_back(1, 4, 7);
+	ts.emplace_back(1, 7, 5);
+	ts.emplace_back(4, 3, 8);
+	ts.emplace_back(4, 8, 7);
+	ts.emplace_back(3, 2, 6);
+	ts.emplace_back(3, 6, 8);
+	ts.emplace_back(6, 5, 7);
+	ts.emplace_back(6, 7, 8);
+
+	Mesh out;
+	out.accept_light = true;
+	out.triangles = ts;
+	out.vertexes = vs;
+	return out;
+}
+
+struct tuple {
+	float i, j;
+};
+
+tuple apply_dir_delta(tuple pos, direction dir, float delta) {
+	switch (dir) {
+	case direction::i_p:
+		pos.i += delta; break;
+	case direction::i_n:
+		pos.i -= delta; break;
+	case direction::j_p:
+		pos.j += delta; break;
+	case direction::j_n:
+		pos.j -= delta; break;
+	}
+	return pos;
+}
 
 int main(int argc, char **argv) {
-	printf("Press any key to start...");
-	getchar();
+	//printf("Press any key to start...");
+	//getchar();
 	system("cls");
 
-	float cur_pi = block_dist * start_i, cur_pj = block_dist * start_j, cur_r = 0.0f;
+	int cur_i = start_i, cur_j = start_j;
+
 	direction cur_dir = direction::i_p;
 
-	int map[map_size][map_size] = { 0 };
+	float dr = 0;
 
+	int nstep = 0;
+
+	int map[map_size][map_size] = { 0 };
+	
 	Mesh block_mesh[map_size][map_size];
 	for (int i = 0; i < map_size; i++) {
 		for (int j = 0; j < map_size; j++) {
@@ -114,6 +175,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	Mesh snake_head = get_snake_head();
+	Mesh snake_body = get_snake_body();
 
 	PointLight pl;
 	pl.position = { 0, 3, 0 };
@@ -127,7 +189,7 @@ int main(int argc, char **argv) {
 
 	Context context(width, height);
 
-	present::initialize(GetConsoleWindow(), width, height, 1);
+	present::initialize(GetConsoleWindow(), width, height, 2);
 
 	Camera camera;
 	camera.lens_size = { (float)width / (float)height, 1.0 };
@@ -135,8 +197,14 @@ int main(int argc, char **argv) {
 	int frames = 0;
 	auto prev = std::chrono::high_resolution_clock::now();
 
+
+
 	while (true) {
-		cur_pi += 0.02f;
+		float cur_pi = cur_i * block_dist, cur_pj = cur_j * block_dist;
+		tuple pos = apply_dir_delta({ cur_pi, cur_pj }, cur_dir, nstep * step);
+
+		float cur_r = float(cur_dir) * M_PI / 2;
+		float smooth_r = dr + cur_r;
 
 #pragma region FPS
 		frames++;
@@ -147,20 +215,20 @@ int main(int argc, char **argv) {
 			prev = now;
 			frames = 0;
 			char title[50] = { 0 };
-			sprintf_s(title, "Console3D FPS=%.2f", (float)(100.0 / (d / 1000.0)));
+			sprintf_s(title, "SnakeDemo FPS=%.2f", (float)(100.0 / (d / 1000.0)));
 			SetConsoleTitle(title);
 		}
 #pragma endregion
 
-		
-		camera.transformation = Transformation().rotate(X, cam_pitch).translate(0, cam_height, 0).rotate(Y, cur_r).translate(0, 0, cam_back);
+
+		camera.transformation = Transformation().rotate(X, cam_pitch).translate(0, 0, cam_back).rotate(Y, smooth_r).translate(0, cam_height, 0);
 
 		context.scene_begin(camera);
 
 		context.set_ambient_light(al);
 		context.set_point_light(pl);
 
-		context.set_world_transformation(Transformation().translate(-cur_pj, 0, -cur_pi));
+		context.set_world_transformation(Transformation().translate(-pos.j, 0, -pos.i));
 		for (int i = 0; i < map_size; i++) {
 			for (int j = 0; j < map_size; j++) {
 				context.draw_mesh(block_mesh[i][j]);
@@ -168,14 +236,47 @@ int main(int argc, char **argv) {
 		}
 		context.set_world_transformation(Transformation());
 
-		snake_head.transformation = Transformation().scale(0.5).rotate(Y, cur_dir * M_PI / 2);
+		snake_head.transformation = Transformation().scale(0.5).translate(0, 0, 0.65).rotate(Y, cur_r);
 		context.draw_mesh(snake_head);
+		//context.draw_mesh(snake_body);
 
 		context.scene_end();
 
 		present::set_all_pixels(context);
 		present::present();
-		
+
+		nstep++;
+		if (nstep >= steps_per_block) {
+			nstep = 0;
+
+			int turn = 0; // -1=right 1=left 
+
+			//static int t = 0;
+			//t++;
+			//if (t % 5 == 0) {
+			//	turn = -1;
+			//}
+			if (_kbhit()) {
+				int ch = _getch();
+				if (ch == 224) {
+					int ch2 = _getch();
+					if (ch2 == 75) {
+						turn = 1;
+					}
+					else if (ch2 == 77) {
+						turn = -1;
+					}
+				}
+			}
+			
+
+
+			cur_dir = direction((int(cur_dir) + turn + 4) % 4); // turn left
+			dr = -turn * M_PI / 2;
+		}
+
+		dr *= 0.9;
+
 	}
 	return EXIT_SUCCESS;
 }
