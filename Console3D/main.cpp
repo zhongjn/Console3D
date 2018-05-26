@@ -1,7 +1,6 @@
 //#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-#include "console.h"
 #include "my3d.h"
 #include "my3dpresent.h"
 #include <math.h>
