@@ -4,13 +4,12 @@
 #include <vector>
 #include <type_traits>
 
-namespace console3d {
-	namespace core {
+namespace my3d {
 
 		const int X = 0, Y = 1, Z = 2;
-		//const int DEPTH = 2;
-		//const int X = 0, Y = 1, DEPTH = 2;
-		//const int U = 0, V = 0;
+
+#pragma region Vector
+
 
 		template<int _size>
 		class Vector {
@@ -85,6 +84,9 @@ namespace console3d {
 			}
 		};
 
+#pragma endregion
+
+
 		typedef Vector<2> UV;
 		typedef Vector<2> ScreenCoordXY;
 		typedef Vector<3> ScreenCoordXYZ;
@@ -92,7 +94,7 @@ namespace console3d {
 		typedef Vector<3> Position;
 		typedef Vector<3> BilinearCoeffient;
 
-		//变换矩阵
+
 		class Matrix3 {
 		private:
 			float a[3][3] = { 0.0f };
@@ -135,7 +137,7 @@ namespace console3d {
 
 		//顶点
 		struct Vertex {
-			friend class Core3DContext;
+			friend class Context;
 		public:
 			Position position;
 			Color color;
@@ -145,7 +147,7 @@ namespace console3d {
 
 
 		struct Triangle {
-			friend class Core3DContext;
+			friend class Context;
 		public:
 			int index[3] = { 0 };
 			Triangle();
@@ -160,7 +162,7 @@ namespace console3d {
 
 		//像素
 		struct Pixel {
-			friend class Core3DContext;
+			friend class Context;
 		public:
 			float depth = 0.0; //深度
 			//Color color = { 0, 0, 0 };
@@ -203,8 +205,6 @@ namespace console3d {
 		};
 
 
-
-		//相机
 		struct Camera : public Object {
 		public:
 			Camera();
@@ -213,10 +213,10 @@ namespace console3d {
 			float depth_minimum = 1.0f;
 		};
 
-		class Core3DContext {
+		class Context {
 		public:
 			short height, width;
-			Core3DContext(short width, short height); //根据画面高度宽度初始化pixels
+			Context(short width, short height); //根据画面高度宽度初始化pixels
 			inline Color get_scene_output(int x, int y) {
 				return output[y * width + x];
 			}
@@ -249,4 +249,3 @@ namespace console3d {
 		};
 
 	}
-}

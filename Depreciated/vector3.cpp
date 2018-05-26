@@ -1,4 +1,4 @@
-//#include "core.h"
+//#include "my3d.h"
 //#include <math.h>
 //
 //namespace console3d {

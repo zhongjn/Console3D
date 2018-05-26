@@ -118,19 +118,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="camera.cpp" />
-    <ClCompile Include="mesh.cpp" />
-    <ClCompile Include="core3dcontext.cpp" />
+    <ClCompile Include="my3d.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="matrix3.cpp" />
-    <ClCompile Include="present.cpp" />
-    <ClCompile Include="transformation.cpp" />
-    <ClCompile Include="vector3.cpp" />
-    <ClCompile Include="triangle.cpp" />
+    <ClCompile Include="my3dpresent.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="core.h" />
-    <ClInclude Include="present.h" />
+    <ClInclude Include="my3d.h" />
+    <ClInclude Include="my3dpresent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

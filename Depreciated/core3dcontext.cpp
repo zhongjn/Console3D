@@ -1,5 +1,5 @@
 #define _USE_MATH_DEFINES
-#include "core.h"
+#include "my3d.h"
 #include <cfloat>
 #include <algorithm>
 #include <functional>
@@ -63,7 +63,7 @@ namespace console3d {
 
 #pragma endregion
 
-		Core3DContext::Core3DContext(short w, short h) {
+		Context::Context(short w, short h) {
 			height = h;
 			width = w;
 			buffer_pixels = new Pixel[height * width];
@@ -72,7 +72,7 @@ namespace console3d {
 			vertexes.reserve(reserve_vertex_count);
 		}
 
-		void Core3DContext::scene_begin() {
+		void Context::scene_begin() {
 			for (int i = 0; i < height * width; i++) {
 				buffer_pixels[i].triangle = nullptr;
 				buffer_pixels[i].depth = FLT_MAX;
@@ -82,7 +82,7 @@ namespace console3d {
 			vertexes.clear();
 		}
 
-		void Core3DContext::scene_end() {
+		void Context::scene_end() {
 
 			for (auto &vc : vertexes) {
 				vc.coord = project_to_screen(vc.position);
@@ -96,7 +96,7 @@ namespace console3d {
 
 
 
-		void Core3DContext::draw_mesh(Mesh &mesh) {
+		void Context::draw_mesh(Mesh &mesh) {
 
 			int vi = vertexes.size();
 			Transformation trans = transformation_combined * mesh.transformation;
@@ -117,12 +117,12 @@ namespace console3d {
 			}
 		}
 
-		void Core3DContext::set_ambient_light(AmbientLight &light)
+		void Context::set_ambient_light(AmbientLight &light)
 		{
 			ambient_light = light;
 		}
 
-		void Core3DContext::set_point_light(std::vector<PointLight> &lights)
+		void Context::set_point_light(std::vector<PointLight> &lights)
 		{
 			point_lights = lights; // Éî¿½±´Ò»·Ý
 			for (auto &light : point_lights) {
@@ -130,19 +130,19 @@ namespace console3d {
 			}
 		}
 
-		void Core3DContext::vertex_shade()
+		void Context::vertex_shade()
 		{
 		}
 
-		void Core3DContext::cull()
+		void Context::cull()
 		{
 		}
 
-		void Core3DContext::clip_z()
+		void Context::clip_z()
 		{
 		}
 
-		void Core3DContext::rasterize() {
+		void Context::rasterize() {
 			for (auto &triangle : triangles) {
 				ScreenCoordXYZ coords[3];
 
@@ -247,7 +247,7 @@ namespace console3d {
 
 		}
 
-		void Core3DContext::pixel_shade()
+		void Context::pixel_shade()
 		{
 			int pl_n = point_lights.size();
 			PointLight* pl = &point_lights[0];
@@ -311,7 +311,7 @@ namespace console3d {
 			}
 		}
 
-		void Core3DContext::compute_triangle_normal(Triangle * triangle)
+		void Context::compute_triangle_normal(Triangle * triangle)
 		{
 			if (triangle != nullptr) {
 				if (!triangle->normal_computed) {
@@ -327,12 +327,12 @@ namespace console3d {
 			}
 		}
 
-		Pixel & Core3DContext::get_pixel(int i, int j)
+		Pixel & Context::get_pixel(int i, int j)
 		{
 			return buffer_pixels[j * width + i];
 		}
 
-		ScreenCoordXYZ Core3DContext::project_to_screen(Position pos) {
+		ScreenCoordXYZ Context::project_to_screen(Position pos) {
 			// (x,y)=ScreenCoord, x=vertical, y=horizontal, TopLeft=(0,0), BottomRight=(width,height)
 			// z = depth
 			Vector<3> temp;

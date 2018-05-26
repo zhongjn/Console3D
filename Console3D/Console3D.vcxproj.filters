@@ -18,36 +18,18 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="matrix3.cpp">
+    <ClCompile Include="my3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="core3dcontext.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vector3.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="transformation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="present.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="triangle.cpp">
+    <ClCompile Include="my3dpresent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="core.h">
+    <ClInclude Include="my3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="present.h">
+    <ClInclude Include="my3dpresent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

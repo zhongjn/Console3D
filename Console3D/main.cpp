@@ -2,13 +2,12 @@
 
 #include <windows.h>
 #include "console.h"
-#include "core.h"
-#include "present.h"
+#include "my3d.h"
+#include "my3dpresent.h"
 #include <math.h>
 #include <chrono>
 
-using namespace console3d;
-using namespace core;
+using namespace my3d;
 
 const int width = 320, height = 240;
 
@@ -105,15 +104,15 @@ int main(int argc, char **argv) {
 	Vector<3> vec(1, 2, 3);
 	int a = 1 + 2;
 
-	Core3DContext context(width, height);
+	Context context(width, height);
 
 	float angle = 0;
 
 	//console::initialize(size, size);
-	present::initialize(GetConsoleWindow(), width, height, 1);
+	present::initialize(GetConsoleWindow(), width, height, 2);
 
 	auto cam_trans =
-		Transformation().translate(Vector<3>(0.0, 0, -20.0)).rotate(X, 0.5);
+		Transformation().translate(Vector<3>(0.0, 0, -10.0)).rotate(X, 0.5);
 	Camera camera(cam_trans, Size{ (float)width / (float)height, 1.0 });
 
 	context.camera = camera;
@@ -171,7 +170,7 @@ int main(int argc, char **argv) {
 		
 
 		for (int i = 0; i < t*t*t; i++) {
-			cubes[i].transformation = cubes[i].transformation.rotate(Y, 0.01f);
+			cubes[i].transformation = cubes[i].transformation.rotate(Z, 0.01f);
 			context.draw_mesh(cubes[i]);
 		}
 

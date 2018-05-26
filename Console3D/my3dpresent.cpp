@@ -1,8 +1,8 @@
-#include "present.h"
+#include "my3dpresent.h"
 #include <Windows.h>
-#include "core.h"
+#include "my3d.h"
 
-namespace console3d {
+namespace my3d {
 	namespace present {
 		struct tempcolor {
 			BYTE b;
@@ -54,7 +54,7 @@ namespace console3d {
 			BitBlt(mydc, 0, 0, width, height, memdc, 0, 0, SRCCOPY);
 		}
 
-		void set_pixel(int x, int y, core::Color color) {
+		void set_pixel(int x, int y, my3d::Color color) {
 			tempcolor c;
 			for (int i = 0; i < 3; i++) {
 				if (color[i] < 0) {
@@ -73,10 +73,10 @@ namespace console3d {
 				}
 			}
 		}
-		void set_all_pixels(core::Core3DContext &context)
+		void set_all_pixels(my3d::Context &context)
 		{
-			for (int i = 0; i < width; i++) {
-				for (int j = 0; j < height; j++) {
+			for (int i = 0; i < owidth; i++) {
+				for (int j = 0; j < oheight; j++) {
 					present::set_pixel(i, j, context.get_scene_output(i, j));
 				}
 			}
