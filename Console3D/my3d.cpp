@@ -184,6 +184,11 @@ namespace my3d {
 			}
 		}
 
+		Transformation Transformation::translate(float x, float y, float z)
+		{
+			return translate(Vector<3>(x, y, z));
+		}
+
 		Transformation Transformation::translate(Vector<3> vec)
 		{
 			Transformation out;
@@ -280,12 +285,16 @@ namespace my3d {
 				vertexes.reserve(reserve_vertex_count);
 			}
 
+			void Context::scene_begin(Camera cam) {
+				camera = cam;
+				scene_begin();
+			}
+
 			void Context::scene_begin() {
 				for (int i = 0; i < height * width; i++) {
 					buffer_pixels[i].triangle = nullptr;
 					buffer_pixels[i].depth = FLT_MAX;
 				}
-				transformation_combined = camera.transformation.inverse() * transformation_world;
 				triangles.clear();
 				vertexes.clear();
 			}
@@ -321,6 +330,7 @@ namespace my3d {
 						t.index[i] += vi;
 					}
 					t.roughness = mesh.roughness;
+					t.accept_light = mesh.accept_light;
 					triangles.emplace_back(t);
 				}
 			}
@@ -330,12 +340,25 @@ namespace my3d {
 				ambient_light = light;
 			}
 
+			void Context::set_point_light(PointLight & light)
+			{
+				std::vector<PointLight> pls;
+				pls.emplace_back(light);
+				set_point_light(pls);
+			}
+
 			void Context::set_point_light(std::vector<PointLight> &lights)
 			{
 				point_lights = lights; // 深拷贝一份
 				for (auto &light : point_lights) {
 					light.position = transformation_combined.apply(light.position, true);
 				}
+			}
+
+			void Context::set_world_transformation(Transformation world)
+			{
+				transformation_combined = camera.transformation.inverse() * world;
+
 			}
 
 			void Context::vertex_shade()
@@ -467,51 +490,58 @@ namespace my3d {
 						if (p.triangle != nullptr) {
 
 							Color origin = apply_bilinear(vertexes.data(), p.triangle->index, p.bilinear_coefficient, [](Vertex v) { return v.color; });
-							compute_triangle_normal(p.triangle);
-							Vector<3> normal = p.triangle->normal;
-
-							Position pos = apply_bilinear(vertexes.data(), p.triangle->index, p.bilinear_coefficient, [](Vertex v) { return v.position; });
-
-							out = origin * 0.3;
-
-
-							for (int ip = 0; ip < pl_n; ip++) {
-								PointLight &light = pl[ip];
-								Vector<3> light_in = (light.position - pos).normalize(); // 入射向量，指向光源
-								Vector<3> obsv = -pos.normalize(); // 观察向量，指向观察者
-
-								float t1 = light_in.dot(normal);
-								float t2 = obsv.dot(normal);
-								float test = t1 * t2;  // 若>0，则光源与观察者在平面同一侧
-								if (test > 0) {
-									if (t2 < 0) {
-										p.triangle->normal = normal = -normal;
-									}
-									//Vector<3> light_out = normal * (light_in.dot(normal) * 2) - light_in;
-
-									// 反射光，土制的正态模型，试试效果
-									//Vector<3> half = (light_in + obsv).normalize();
-									//float cos = light_out.dot(obsv);
-									//float angle = acosf(cos);
-									//float k_refl = expf(-angle * angle / 2 / roughness / roughness) / 2 / M_PI / roughness; // 反射系数
-									//
-									//// 几何修正
-									//float cg = 2 * half.dot(normal) / half.dot(obsv);
-									//float cc = fminf(normal.dot(obsv), normal.dot(light_in));
-									//float g = fminf(1, cc * cg);
-									//k_refl *= g;
-									//out = out + light.color * (k_refl * light.intensity);
-
-									// Lambert
-									float cos = light_in.dot(normal);
-									auto vt = light.position - pos;
-									float decay = 1 / vt.dot(vt);
-									out = out + light.color * (cos * light.intensity * decay);
-								}
+							
+							if (!p.triangle->accept_light) {
+								out = origin;
 							}
+							else {
 
-							// 环境光
-							out = out + ambient_light.color * ambient_light.intensity;
+								compute_triangle_normal(p.triangle);
+								Vector<3> normal = p.triangle->normal;
+
+								Position pos = apply_bilinear(vertexes.data(), p.triangle->index, p.bilinear_coefficient, [](Vertex v) { return v.position; });
+
+								out = origin * 0.3;
+
+
+								for (int ip = 0; ip < pl_n; ip++) {
+									PointLight &light = pl[ip];
+									Vector<3> light_in = (light.position - pos).normalize(); // 入射向量，指向光源
+									Vector<3> obsv = -pos.normalize(); // 观察向量，指向观察者
+
+									float t1 = light_in.dot(normal);
+									float t2 = obsv.dot(normal);
+									float test = t1 * t2;  // 若>0，则光源与观察者在平面同一侧
+									if (test > 0) {
+										if (t2 < 0) {
+											p.triangle->normal = normal = -normal;
+										}
+										//Vector<3> light_out = normal * (light_in.dot(normal) * 2) - light_in;
+
+										// 反射光，土制的正态模型，试试效果
+										//Vector<3> half = (light_in + obsv).normalize();
+										//float cos = light_out.dot(obsv);
+										//float angle = acosf(cos);
+										//float k_refl = expf(-angle * angle / 2 / roughness / roughness) / 2 / M_PI / roughness; // 反射系数
+										//
+										//// 几何修正
+										//float cg = 2 * half.dot(normal) / half.dot(obsv);
+										//float cc = fminf(normal.dot(obsv), normal.dot(light_in));
+										//float g = fminf(1, cc * cg);
+										//k_refl *= g;
+										//out = out + light.color * (k_refl * light.intensity);
+
+										// Lambert
+										float cos = light_in.dot(normal);
+										auto vt = light.position - pos;
+										float decay = 1 / vt.dot(vt);
+										out = out + light.color * (cos * light.intensity * decay);
+									}
+								}
+
+								// 环境光
+								out = out + ambient_light.color * ambient_light.intensity;
+							}
 						}
 
 						output[j * width + i] = out;

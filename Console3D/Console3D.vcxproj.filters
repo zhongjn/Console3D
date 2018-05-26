@@ -13,16 +13,22 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Samples">
+      <UniqueIdentifier>{801ada80-d54a-4dea-9c90-d54ff8840862}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="my3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="my3dpresent.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cubes.cpp">
+      <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="snake.cpp">
+      <Filter>Samples</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -121,6 +121,7 @@ namespace my3d {
 			Vector<3> apply(Vector<3> v, bool affine);
 			Transformation scale(float scale);
 			Transformation rotate(int axis, float theta);
+			Transformation translate(float x, float y, float z);
 			Transformation translate(Vector<3> vec);
 			Matrix3 linear;
 			Vector<3> translation;
@@ -156,7 +157,8 @@ namespace my3d {
 			bool backface_cull = false;
 			bool culled = false;
 			bool normal_computed = false;
-			float roughness = 1.0f;
+			float roughness;
+			bool accept_light;
 			Vector<3> normal;
 		};
 
@@ -200,6 +202,7 @@ namespace my3d {
 			std::vector<Triangle> triangles;
 			bool backface_cull = false;
 			float roughness = 1.0f;
+			bool accept_light = true;
 			Mesh();
 			Mesh(std::vector<Vertex> vertexes, std::vector<Triangle> triangles);
 		};
@@ -221,11 +224,13 @@ namespace my3d {
 				return output[y * width + x];
 			}
 			void scene_begin(); //开始画一帧，还原pixels
+			void scene_begin(Camera cam);
 			void scene_end(); //结束画一帧
 			void draw_mesh(Mesh &mesh);
 			void set_ambient_light(AmbientLight &light);
+			void set_point_light(PointLight &light);
 			void set_point_light(std::vector<PointLight> &lights);
-			Transformation transformation_world;
+			void set_world_transformation(Transformation world);
 			Camera camera;
 		private:
 			// 私有变量

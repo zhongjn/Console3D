@@ -96,7 +96,7 @@ Mesh cube(Position pos) {
 }
 
 
-int main(int argc, char **argv) {
+int main1(int argc, char **argv) {
 
 	system("cls");
 
