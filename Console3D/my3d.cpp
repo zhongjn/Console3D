@@ -297,6 +297,7 @@ namespace my3d {
 		}
 		triangles.clear();
 		vertexes.clear();
+		set_world_transformation(Transformation());
 	}
 
 	void Context::scene_end() {

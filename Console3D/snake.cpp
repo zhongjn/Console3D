@@ -274,7 +274,6 @@ int main(int argc, char **argv) {
 			cur_dir = direction((int(cur_dir) + turn + 4) % 4); // turn left
 			dr = -turn * M_PI / 2;
 		}
-
 		dr *= 0.9;
 
 	}
